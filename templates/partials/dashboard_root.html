@@ -1,0 +1,121 @@
+<div id="dashboard-root">
+  {{if .Success}}
+    <div style="background-color: #d4edda; color: #155724; padding: 10px; margin-bottom: 10px;">
+      {{.Success}}
+    </div>
+  {{end}}
+
+  {{if .Error}}
+    <div style="background-color: #f8d7da; color: #721c24; padding: 10px; margin-bottom: 10px;">
+      {{.Error}}
+    </div>
+  {{end}}
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+    <div class="bg-white border rounded-xl p-4">
+      <h2 class="text-lg font-semibold mb-3">Issue PPE</h2>
+
+      <form class="space-y-3"
+            hx-post="/issue"
+            hx-target="#dashboard-root"
+            hx-swap="outerHTML"
+            method="post">
+        <div>
+          <label class="block text-sm font-medium mb-1">Issued To (Employee)</label>
+          <select name="issued_to_user_id" class="w-full border rounded px-3 py-2" required>
+            <option value="">Select employee</option>
+            {{range .Data.IssuedToUsers}}
+              <option value="{{.ID}}" {{if eq .ID $.Data.IssueForm.IssuedToUserID}}selected{{end}}>{{.Name}} ({{.Role}})</option>
+            {{end}}
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-1">Item</label>
+          <select name="item_id" class="w-full border rounded px-3 py-2" required>
+            <option value="">Select item</option>
+            {{range .Data.Items}}
+              <option value="{{.ID}}" {{if eq .ID $.Data.IssueForm.ItemID}}selected{{end}}>{{.Name}} - {{.Size}} (Stock: {{.Quantity}})</option>
+            {{end}}
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-1">Issued By (Warehouse)</label>
+          <select name="issued_by_user_id" class="w-full border rounded px-3 py-2" required>
+            <option value="">Select warehouse staff</option>
+            {{range .Data.WarehouseStaff}}
+              <option value="{{.ID}}" {{if eq .ID $.Data.IssueForm.IssuedByUserID}}selected{{end}}>{{.Name}}</option>
+            {{end}}
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-medium mb-1">Quantity</label>
+            <input
+              name="quantity"
+              type="number"
+              min="1"
+              value="{{if .Data.IssueForm.Quantity}}{{.Data.IssueForm.Quantity}}{{else}}1{{end}}"
+              class="w-full border rounded px-3 py-2"
+              required
+            />
+          </div>
+        </div>
+
+        <button class="w-full bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700" type="submit">
+          Record Issue
+        </button>
+      </form>
+    </div>
+
+    <div class="bg-white border rounded-xl p-4">
+      <h2 class="text-lg font-semibold mb-3">Return PPE</h2>
+      <form class="space-y-3"
+            hx-post="/return"
+            hx-target="#dashboard-root"
+            hx-swap="outerHTML"
+            method="post">
+        <div>
+          <label class="block text-sm font-medium mb-1">Issue Transaction</label>
+          <select name="transaction_id" class="w-full border rounded px-3 py-2" required>
+            <option value="">Select issued transaction</option>
+            {{range .Data.ReturnIssueOptions}}
+              <option value="{{.TransactionID}}" {{if eq .TransactionID $.Data.ReturnForm.TransactionID}}selected{{end}}>{{.Label}}</option>
+            {{end}}
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-1">Quantity Returned</label>
+          <input
+            name="quantity"
+            type="number"
+            min="1"
+            value="{{if .Data.ReturnForm.QuantityReturned}}{{.Data.ReturnForm.QuantityReturned}}{{else}}1{{end}}"
+            class="w-full border rounded px-3 py-2"
+            required
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-1">Received By (Warehouse)</label>
+          <select name="received_by_user_id" class="w-full border rounded px-3 py-2" required>
+            <option value="">Select warehouse staff</option>
+            {{range .Data.WarehouseStaff}}
+              <option value="{{.ID}}" {{if eq .ID $.Data.ReturnForm.ReceivedByUserID}}selected{{end}}>{{.Name}}</option>
+            {{end}}
+          </select>
+        </div>
+
+        <button class="w-full bg-amber-500 text-white rounded px-4 py-2 hover:bg-amber-600" type="submit">
+          Record Return
+        </button>
+      </form>
+    </div>
+  </div>
+
+  {{template "dashboard_transactions.html" .Data.TransactionsTableData}}
+</div>
+

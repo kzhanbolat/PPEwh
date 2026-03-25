@@ -1,0 +1,40 @@
+<div class="bg-white border rounded-xl p-4">
+  <h2 class="text-lg font-semibold mb-3">Transaction History</h2>
+
+  <div class="overflow-x-auto">
+    <table class="min-w-full text-sm">
+      <thead>
+        <tr class="text-left text-gray-600">
+          <th class="py-2 pr-3">Timestamp</th>
+          <th class="py-2 pr-3">Type</th>
+          <th class="py-2 pr-3">Issued To</th>
+          <th class="py-2 pr-3">Issued By</th>
+          <th class="py-2 pr-3">Department</th>
+          <th class="py-2 pr-3">Item</th>
+          <th class="py-2">Qty</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range .Transactions}}
+          <tr class="border-t">
+            <td class="py-2 pr-3 font-mono text-xs text-gray-800">{{.Timestamp}}</td>
+            <td class="py-2 pr-3">{{.EventType}}</td>
+            <td class="py-2 pr-3">{{.IssuedToUserName}}</td>
+            <td class="py-2 pr-3">{{.IssuedByUserName}}</td>
+            <td class="py-2 pr-3">{{.DepartmentName}}</td>
+            <td class="py-2 pr-3">
+              <div class="font-medium">{{.ItemName}}</div>
+            </td>
+            <td class="py-2 font-semibold">{{.Quantity}}</td>
+          </tr>
+        {{end}}
+        {{if not .Transactions}}
+          <tr class="border-t">
+            <td colspan="7" class="py-4 text-gray-500">No transactions yet.</td>
+          </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+</div>
+

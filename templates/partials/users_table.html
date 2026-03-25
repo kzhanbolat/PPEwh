@@ -1,0 +1,76 @@
+<div id="users-table-wrap" class="mt-6">
+  {{if .Error}}
+    <div class="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-red-700">
+      {{.Error}}
+    </div>
+  {{end}}
+  {{if .Success}}
+    <div class="mb-4 rounded border border-green-200 bg-green-50 px-3 py-2 text-green-700">
+      {{.Success}}
+    </div>
+  {{end}}
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white border rounded-xl p-4">
+      <h2 class="text-lg font-semibold mb-3">Current Users</h2>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead>
+            <tr class="text-left text-gray-600">
+              <th class="py-2 pr-3">ID</th>
+              <th class="py-2 pr-3">Name</th>
+              <th class="py-2">Department ID</th>
+              <th class="py-2">Role</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{range .Users}}
+              <tr class="border-t">
+                <td class="py-2 pr-3 font-mono text-xs text-gray-800">{{.ID}}</td>
+                <td class="py-2 pr-3">{{.Name}}</td>
+                <td class="py-2">{{.DepartmentID}}</td>
+                <td class="py-2">
+                  <span class='{{if eq .Role "warehouse"}}text-emerald-700{{else}}text-gray-700{{end}} font-medium'>{{.Role}}</span>
+                </td>
+              </tr>
+            {{end}}
+            {{if not .Users}}
+              <tr class="border-t">
+                <td colspan="4" class="py-4 text-gray-500">No users found.</td>
+              </tr>
+            {{end}}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="bg-white border rounded-xl p-4">
+      <h2 class="text-lg font-semibold mb-3">Add User</h2>
+      <form class="space-y-3"
+            hx-post="/users"
+            hx-target="#users-table-wrap"
+            hx-swap="outerHTML"
+            method="post">
+        <div>
+          <label class="block text-sm font-medium mb-1">Name</label>
+          <input name="name" class="w-full border rounded px-3 py-2" required />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Department ID</label>
+          <input name="department_id" class="w-full border rounded px-3 py-2" required />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Role</label>
+          <select name="role" class="w-full border rounded px-3 py-2" required>
+            <option value="employee">employee</option>
+            <option value="warehouse">warehouse</option>
+          </select>
+        </div>
+        <button class="w-full bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700" type="submit">
+          Add User
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
