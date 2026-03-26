@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -9,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"ppewh/internal/models"
+	"ppewh/internal/i18n"
 	"ppewh/internal/services"
 )
 
@@ -31,9 +33,14 @@ func NewTransactionsHandler(
 }
 
 func (h *TransactionsHandler) History(c *gin.Context) {
+	lang := getLang(c)
+	tfunc := translator(lang)
+
 	_, rows, err := h.listTransactionRows()
 	if err != nil {
 		c.HTML(http.StatusInternalServerError, "transactions.html", TransactionsTableData{
+			Lang:         lang,
+			T:            tfunc,
 			Transactions: rows,
 			FlashError:   "failed to load transactions",
 		})
@@ -67,6 +74,8 @@ func (h *TransactionsHandler) History(c *gin.Context) {
 	}
 
 	c.HTML(http.StatusOK, "transactions.html", TransactionsTableData{
+		Lang:         lang,
+		T:            tfunc,
 		Transactions: filtered,
 	})
 }
@@ -91,14 +100,14 @@ func (h *TransactionsHandler) Issue(c *gin.Context) {
 	_, err = h.txSvc.IssueItem(issueForm.ItemID, qty, issueForm.IssuedToUserID, issueForm.IssuedByUserID)
 	if err != nil {
 		// DO NOT redirect on error; render same page and preserve user input.
-		h.renderDashboardRoot(c, http.StatusBadRequest, issueForm, ReturnFormData{QuantityReturned: "1"}, err.Error(), "", "")
+		h.renderDashboardRoot(c, http.StatusBadRequest, issueForm, ReturnFormData{QuantityReturned: "1"}, localizeIssueError(getLang(c), err.Error()), "", "")
 		return
 	}
 
 	// Success: keep user on same page; reset issue form state.
 	if c.GetHeader("HX-Request") != "" {
 		empty := IssueFormData{Quantity: "1"}
-		h.renderDashboardRoot(c, http.StatusOK, empty, ReturnFormData{QuantityReturned: "1"}, "", "Issue recorded successfully.", "")
+		h.renderDashboardRoot(c, http.StatusOK, empty, ReturnFormData{QuantityReturned: "1"}, "", translator(getLang(c))("issue_success"), "")
 		return
 	}
 	c.Redirect(http.StatusSeeOther, "/")
@@ -144,7 +153,7 @@ func (h *TransactionsHandler) Return(c *gin.Context) {
 	if c.GetHeader("HX-Request") != "" {
 		empty := IssueFormData{Quantity: "1"}
 		returnForm := ReturnFormData{QuantityReturned: "1"}
-		h.renderDashboardRoot(c, http.StatusOK, empty, returnForm, "", "Return recorded successfully.", "")
+		h.renderDashboardRoot(c, http.StatusOK, empty, returnForm, "", translator(getLang(c))("return_success"), "")
 		return
 	}
 	c.Redirect(http.StatusSeeOther, "/")
@@ -249,13 +258,17 @@ func (h *TransactionsHandler) listTransactionRows() ([]models.Transaction, []Tra
 }
 
 func (h *TransactionsHandler) renderDashboardRoot(c *gin.Context, status int, issueForm IssueFormData, returnForm ReturnFormData, errMsg string, flash string, flashError string) {
-	data, renderErr := h.buildDashboardPageData(issueForm, returnForm, errMsg, flash, flashError)
+	lang := getLang(c)
+	tfunc := translator(lang)
+	data, renderErr := h.buildDashboardPageData(lang, issueForm, returnForm, errMsg, flash, flashError)
 	if renderErr != nil {
 		c.String(http.StatusInternalServerError, "failed to render dashboard")
 		return
 	}
 
 	page := PageData{
+		Lang:    lang,
+		T:       tfunc,
 		Success: flash,
 		Error:   errMsg,
 		Data:    data,
@@ -272,7 +285,8 @@ func (h *TransactionsHandler) renderDashboardRoot(c *gin.Context, status int, is
 	c.HTML(status, "index.html", page)
 }
 
-func (h *TransactionsHandler) buildDashboardPageData(issueForm IssueFormData, returnForm ReturnFormData, errMsg string, flash string, flashError string) (DashboardPageData, error) {
+func (h *TransactionsHandler) buildDashboardPageData(lang string, issueForm IssueFormData, returnForm ReturnFormData, errMsg string, flash string, flashError string) (DashboardPageData, error) {
+	tfunc := translator(lang)
 	items, err := h.itemsSvc.List()
 	if err != nil {
 		return DashboardPageData{}, err
@@ -299,6 +313,8 @@ func (h *TransactionsHandler) buildDashboardPageData(issueForm IssueFormData, re
 		IssueForm:           issueForm,
 		ReturnForm:         returnForm,
 		TransactionsTableData: TransactionsTableData{
+			Lang:         lang,
+			T:            tfunc,
 			Transactions: rows,
 			Flash:        flash,
 			FlashError:   flashError,
@@ -310,5 +326,20 @@ func (h *TransactionsHandler) buildDashboardPageData(issueForm IssueFormData, re
 	}
 
 	return pageData, nil
+}
+
+var stockMsgRe = regexp.MustCompile(`Available:\s*(\d+),\s*requested:\s*(\d+)`)
+
+func localizeIssueError(lang string, raw string) string {
+	if strings.Contains(raw, "Not enough stock.") {
+		m := stockMsgRe.FindStringSubmatch(raw)
+		if len(m) == 3 {
+			available, _ := strconv.Atoi(m[1])
+			requested, _ := strconv.Atoi(m[2])
+			return i18n.Tf(lang, "error_stock_detailed", available, requested)
+		}
+		return i18n.T(lang, "error_stock")
+	}
+	return raw
 }
 

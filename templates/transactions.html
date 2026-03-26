@@ -3,47 +3,50 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Warehouse PPE - Transactions</title>
+    <title>{{call .T "transactions_title"}}</title>
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body class="bg-gray-50 text-gray-900">
     <div class="max-w-5xl mx-auto px-4 py-6">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl font-bold">PPE Transactions</h1>
-          <p class="text-sm text-gray-600">History of issues and returns.</p>
+          <h1 class="text-2xl font-bold">{{call .T "transactions_title"}}</h1>
+          <p class="text-sm text-gray-600">{{call .T "transactions_subtitle"}}</p>
         </div>
         <nav class="text-sm">
-          <a class="text-blue-600 hover:underline mr-3" href="/">Dashboard</a>
-          <a class="text-blue-600 hover:underline mr-3" href="/items">Items</a>
-          <a class="text-blue-600 hover:underline" href="/users">Users</a>
+          <a class="text-blue-600 hover:underline mr-3" href="/?lang={{.Lang}}">Dashboard</a>
+          <a class="text-blue-600 hover:underline mr-3" href="/items?lang={{.Lang}}">{{call .T "items"}}</a>
+          <a class="text-blue-600 hover:underline mr-3" href="/users?lang={{.Lang}}">{{call .T "users"}}</a>
+          <a class="text-blue-600 hover:underline" href="/transactions?lang=en">EN</a> |
+          <a class="text-blue-600 hover:underline" href="/transactions?lang=ru">RU</a>
         </nav>
       </div>
 
       <form method="GET" action="/transactions" class="mt-6 mb-4 space-y-3">
+        <input type="hidden" name="lang" value="{{.Lang}}" />
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
-            <input type="text" name="user_name" placeholder="User name" class="w-full border rounded px-3 py-2" />
+            <input type="text" name="user_name" placeholder="{{call .T "user_name"}}" class="w-full border rounded px-3 py-2" />
           </div>
           <div>
-            <input type="text" name="issued_by" placeholder="Issued by" class="w-full border rounded px-3 py-2" />
+            <input type="text" name="issued_by" placeholder="{{call .T "issued_by"}}" class="w-full border rounded px-3 py-2" />
           </div>
           <div>
-            <input type="text" name="item_name" placeholder="Item name" class="w-full border rounded px-3 py-2" />
+            <input type="text" name="item_name" placeholder="{{call .T "item_name"}}" class="w-full border rounded px-3 py-2" />
           </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
             <select name="type" class="w-full border rounded px-3 py-2">
-              <option value="">All</option>
-              <option value="ISSUE">ISSUE</option>
-              <option value="RETURN">RETURN</option>
+              <option value="">{{call .T "all"}}</option>
+              <option value="ISSUE">{{call .T "issue"}}</option>
+              <option value="RETURN">{{call .T "return"}}</option>
             </select>
           </div>
         </div>
         <button type="submit" class="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700">
-          Filter
+          {{call .T "filter"}}
         </button>
       </form>
 

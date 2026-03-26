@@ -34,9 +34,14 @@ func NewHomeHandler(itemsSvc *services.ItemsService, usersSvc *services.UsersSer
 }
 
 func (h *HomeHandler) Dashboard(c *gin.Context) {
+	lang := getLang(c)
+	t := translator(lang)
+
 	items, err := h.itemsSvc.List()
 	if err != nil {
 		c.HTML(http.StatusInternalServerError, "index.html", PageData{
+			Lang:  lang,
+			T:     t,
 			Error: "failed to load items",
 			Data:  DashboardPageData{},
 		})
@@ -45,6 +50,8 @@ func (h *HomeHandler) Dashboard(c *gin.Context) {
 	users, err := h.usersSvc.List()
 	if err != nil {
 		c.HTML(http.StatusInternalServerError, "index.html", PageData{
+			Lang:  lang,
+			T:     t,
 			Error: "failed to load users",
 			Data:  DashboardPageData{},
 		})
@@ -52,6 +59,8 @@ func (h *HomeHandler) Dashboard(c *gin.Context) {
 	}
 
 	rowsData := listTransactionsTableRows(h.txSvc, h.usersSvc, h.deptsSvc)
+	rowsData.Lang = lang
+	rowsData.T = t
 
 	returnOptions := h.buildReturnIssueOptions(users, rowsData.Transactions)
 	pageData := DashboardPageData{
@@ -65,6 +74,8 @@ func (h *HomeHandler) Dashboard(c *gin.Context) {
 		TransactionsTableData: rowsData,
 	}
 	c.HTML(http.StatusOK, "index.html", PageData{
+		Lang:    lang,
+		T:       t,
 		Success: "",
 		Error:   "",
 		Data:    pageData,

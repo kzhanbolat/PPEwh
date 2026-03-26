@@ -1,17 +1,17 @@
 <div class="bg-white border rounded-xl p-4">
-  <h2 class="text-lg font-semibold mb-3">Transaction History</h2>
+  <h2 class="text-lg font-semibold mb-3">{{call .T "transaction_history"}}</h2>
 
   <div class="overflow-x-auto">
     <table class="min-w-full text-sm">
       <thead>
         <tr class="text-left text-gray-600">
-          <th class="py-2 pr-3">Timestamp</th>
-          <th class="py-2 pr-3">Type</th>
-          <th class="py-2 pr-3">Issued To</th>
-          <th class="py-2 pr-3">Issued By</th>
-          <th class="py-2 pr-3">Department</th>
-          <th class="py-2 pr-3">Item</th>
-          <th class="py-2">Qty</th>
+          <th class="py-2 pr-3">{{call .T "timestamp"}}</th>
+          <th class="py-2 pr-3">{{call .T "type"}}</th>
+          <th class="py-2 pr-3">{{call .T "issued_to"}}</th>
+          <th class="py-2 pr-3">{{call .T "issued_by"}}</th>
+          <th class="py-2 pr-3">{{call .T "department"}}</th>
+          <th class="py-2 pr-3">{{call .T "item"}}</th>
+          <th class="py-2">{{call .T "qty"}}</th>
         </tr>
       </thead>
       <tbody>
@@ -30,7 +30,7 @@
         {{end}}
         {{if not .Transactions}}
           <tr class="border-t">
-            <td colspan="7" class="py-4 text-gray-500">No transactions yet.</td>
+            <td colspan="7" class="py-4 text-gray-500">{{call .T "no_transactions"}}</td>
           </tr>
         {{end}}
       </tbody>

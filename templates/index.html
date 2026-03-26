@@ -3,20 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Warehouse PPE - Dashboard</title>
+    <title>{{call .T "title"}}</title>
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body class="bg-gray-50 text-gray-900">
     <div class="max-w-5xl mx-auto px-4 py-6">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl font-bold">Warehouse PPE Management</h1>
-          <p class="text-sm text-gray-600">Issue and return PPE, backed by CSV files.</p>
+          <h1 class="text-2xl font-bold">{{call .T "dashboard_title"}}</h1>
+          <p class="text-sm text-gray-600">{{call .T "dashboard_subtitle"}}</p>
         </div>
         <nav class="text-sm">
-          <a class="text-blue-600 hover:underline mr-3" href="/items">Items</a>
-          <a class="text-blue-600 hover:underline mr-3" href="/users">Users</a>
-          <a class="text-blue-600 hover:underline" href="/transactions">Transactions</a>
+          <a class="text-blue-600 hover:underline mr-3" href="/items?lang={{.Lang}}">{{call .T "items"}}</a>
+          <a class="text-blue-600 hover:underline mr-3" href="/users?lang={{.Lang}}">{{call .T "users"}}</a>
+          <a class="text-blue-600 hover:underline mr-3" href="/transactions?lang={{.Lang}}">{{call .T "transactions"}}</a>
+          <a class="text-blue-600 hover:underline" href="/?lang=en">EN</a> |
+          <a class="text-blue-600 hover:underline" href="/?lang=ru">RU</a>
         </nav>
       </div>
 

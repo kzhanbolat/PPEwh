@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"ppewh/internal/handlers"
+	"ppewh/internal/i18n"
 	"ppewh/internal/services"
 	"ppewh/internal/storage"
 )
@@ -22,6 +23,10 @@ func Run() {
 	dataDir := filepath.Join(rootDir, "data")
 
 	// Storage -> Services -> Handlers
+	if err := i18n.Load(filepath.Join(rootDir, "locales")); err != nil {
+		panic(err)
+	}
+
 	csvStore, err := storage.NewCSVStore(dataDir)
 	if err != nil {
 		panic(err)

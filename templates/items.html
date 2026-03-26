@@ -3,20 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Warehouse PPE - Items</title>
+    <title>{{call .T "items"}}</title>
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body class="bg-gray-50 text-gray-900">
     <div class="max-w-5xl mx-auto px-4 py-6">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl font-bold">PPE Items</h1>
-          <p class="text-sm text-gray-600">Add items and manage stock.</p>
+          <h1 class="text-2xl font-bold">{{call .T "items"}}</h1>
+          <p class="text-sm text-gray-600">{{call .T "add_item"}}</p>
         </div>
         <nav class="text-sm">
-          <a class="text-blue-600 hover:underline mr-3" href="/">Dashboard</a>
-          <a class="text-blue-600 hover:underline mr-3" href="/users">Users</a>
-          <a class="text-blue-600 hover:underline" href="/transactions">Transactions</a>
+          <a class="text-blue-600 hover:underline mr-3" href="/?lang={{.Lang}}">Dashboard</a>
+          <a class="text-blue-600 hover:underline mr-3" href="/users?lang={{.Lang}}">{{call .T "users"}}</a>
+          <a class="text-blue-600 hover:underline mr-3" href="/transactions?lang={{.Lang}}">{{call .T "transactions"}}</a>
+          <a class="text-blue-600 hover:underline" href="/items?lang=en">EN</a> |
+          <a class="text-blue-600 hover:underline" href="/items?lang=ru">RU</a>
         </nav>
       </div>
 

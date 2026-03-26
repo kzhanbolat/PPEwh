@@ -19,18 +19,24 @@ func NewItemsHandler(itemsSvc *services.ItemsService, txSvc *services.Transactio
 }
 
 func (h *ItemsHandler) ListPage(c *gin.Context) {
+	lang := getLang(c)
+	t := translator(lang)
 	items, err := h.itemsSvc.List()
 	if err != nil {
-		c.HTML(http.StatusInternalServerError, "items.html", ItemsTableData{Error: "failed to load items"})
+		c.HTML(http.StatusInternalServerError, "items.html", ItemsTableData{Lang: lang, T: t, Error: "failed to load items"})
 		return
 	}
 
 	c.HTML(http.StatusOK, "items.html", ItemsTableData{
+		Lang:  lang,
+		T:     t,
 		Items: items,
 	})
 }
 
 func (h *ItemsHandler) Add(c *gin.Context) {
+	lang := getLang(c)
+	t := translator(lang)
 	name := c.PostForm("name")
 	size := c.PostForm("size")
 	qtyStr := c.PostForm("quantity")
@@ -42,22 +48,22 @@ func (h *ItemsHandler) Add(c *gin.Context) {
 		_ = c.AbortWithError(http.StatusBadRequest, err)
 		// For HTMX, respond with a partial so the page doesn't hard reload.
 		items, _ := h.itemsSvc.List()
-		c.HTML(http.StatusBadRequest, "items_table.html", ItemsTableData{Items: items, Error: "quantity must be a number"})
+		c.HTML(http.StatusBadRequest, "items_table.html", ItemsTableData{Lang: lang, T: t, Items: items, Error: "quantity must be a number"})
 		return
 	}
 
 	_, err = h.itemsSvc.AddItem(name, size, qty, issueDate, expiryDate)
 	items, listErr := h.itemsSvc.List()
 	if listErr != nil {
-		c.HTML(http.StatusInternalServerError, "items_table.html", ItemsTableData{Items: items, Error: "failed to reload items"})
+		c.HTML(http.StatusInternalServerError, "items_table.html", ItemsTableData{Lang: lang, T: t, Items: items, Error: "failed to reload items"})
 		return
 	}
 
 	if err != nil {
-		c.HTML(http.StatusBadRequest, "items_table.html", ItemsTableData{Items: items, Error: err.Error()})
+		c.HTML(http.StatusBadRequest, "items_table.html", ItemsTableData{Lang: lang, T: t, Items: items, Error: err.Error()})
 		return
 	}
 
-	c.HTML(http.StatusOK, "items_table.html", ItemsTableData{Items: items, Success: "Item added successfully."})
+	c.HTML(http.StatusOK, "items_table.html", ItemsTableData{Lang: lang, T: t, Items: items, Success: t("item_added_success")})
 }
 

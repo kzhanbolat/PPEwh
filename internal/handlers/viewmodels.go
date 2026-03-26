@@ -3,12 +3,16 @@ package handlers
 import "ppewh/internal/models"
 
 type ItemsTableData struct {
+	Lang    string
+	T       func(string) string
 	Items    []models.Item
 	Success  string
 	Error    string
 }
 
 type UsersTableData struct {
+	Lang    string
+	T       func(string) string
 	Users    []models.User
 	Success  string
 	Error    string
@@ -26,6 +30,8 @@ type TransactionRow struct {
 }
 
 type TransactionsTableData struct {
+	Lang    string
+	T       func(string) string
 	Transactions []TransactionRow
 	Flash        string
 	FlashError   string

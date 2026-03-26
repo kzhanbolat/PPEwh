@@ -12,15 +12,15 @@
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <div class="bg-white border rounded-xl p-4">
-      <h2 class="text-lg font-semibold mb-3">Current Users</h2>
+      <h2 class="text-lg font-semibold mb-3">{{call .T "current_users"}}</h2>
       <div class="overflow-x-auto">
         <table class="min-w-full text-sm">
           <thead>
             <tr class="text-left text-gray-600">
               <th class="py-2 pr-3">ID</th>
-              <th class="py-2 pr-3">Name</th>
-              <th class="py-2">Department ID</th>
-              <th class="py-2">Role</th>
+              <th class="py-2 pr-3">{{call .T "name"}}</th>
+              <th class="py-2">{{call .T "department_id"}}</th>
+              <th class="py-2">{{call .T "role"}}</th>
             </tr>
           </thead>
           <tbody>
@@ -36,7 +36,7 @@
             {{end}}
             {{if not .Users}}
               <tr class="border-t">
-                <td colspan="4" class="py-4 text-gray-500">No users found.</td>
+                <td colspan="4" class="py-4 text-gray-500">{{call .T "no_users"}}</td>
               </tr>
             {{end}}
           </tbody>
@@ -45,29 +45,30 @@
     </div>
 
     <div class="bg-white border rounded-xl p-4">
-      <h2 class="text-lg font-semibold mb-3">Add User</h2>
+      <h2 class="text-lg font-semibold mb-3">{{call .T "add_user"}}</h2>
       <form class="space-y-3"
-            hx-post="/users"
+            hx-post="/users?lang={{.Lang}}"
             hx-target="#users-table-wrap"
             hx-swap="outerHTML"
             method="post">
+        <input type="hidden" name="lang" value="{{.Lang}}" />
         <div>
-          <label class="block text-sm font-medium mb-1">Name</label>
+          <label class="block text-sm font-medium mb-1">{{call .T "name"}}</label>
           <input name="name" class="w-full border rounded px-3 py-2" required />
         </div>
         <div>
-          <label class="block text-sm font-medium mb-1">Department ID</label>
+          <label class="block text-sm font-medium mb-1">{{call .T "department_id"}}</label>
           <input name="department_id" class="w-full border rounded px-3 py-2" required />
         </div>
         <div>
-          <label class="block text-sm font-medium mb-1">Role</label>
+          <label class="block text-sm font-medium mb-1">{{call .T "role"}}</label>
           <select name="role" class="w-full border rounded px-3 py-2" required>
             <option value="employee">employee</option>
             <option value="warehouse">warehouse</option>
           </select>
         </div>
         <button class="w-full bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700" type="submit">
-          Add User
+          {{call .T "add_user"}}
         </button>
       </form>
     </div>
