@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="{{.Lang}}">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{call .T "dashboard"}}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body class="ppe-body">
+    <div class="ppe-device">
+      <div class="ppe-device-inner" id="dashboardExportRoot">
+        <header class="ppe-page-head">
+          <a class="ppe-back" href="/?lang={{.Lang}}" title="{{call .T "title"}}">←</a>
+          <h1 class="ppe-page-title">{{call .T "dashboard"}}</h1>
+          <button type="button" id="downloadDashboardPdfBtn" class="ppe-head-action">{{call .T "download_pdf"}}</button>
+          <p class="ppe-page-sub">{{call .T "dashboard_subtitle"}}</p>
+        </header>
+
+        <div class="ppe-lang-row ppe-lang-row--tight">
+          <a href="/dashboard?lang={{.Lang}}">{{call .T "dashboard"}}</a>
+          <span class="text-slate-300">|</span>
+          <a href="/dashboard?lang=en">EN</a>
+          <span class="text-slate-300">|</span>
+          <a href="/dashboard?lang=ru">RU</a>
+        </div>
+
+        {{if .Error}}
+          <div class="ppe-alert ppe-alert--error" role="alert">{{.Error}}</div>
+        {{end}}
+
+        <div class="ppe-panel">
+          <h2 class="font-semibold mb-2">{{call .T "filters"}}</h2>
+          <form method="GET" action="/dashboard" class="space-y-3">
+            <input type="hidden" name="lang" value="{{.Lang}}" />
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="ppe-field !mb-0">
+                <label for="from-date">{{call .T "from_date"}}</label>
+                <input id="from-date" type="date" name="from" class="ppe-input" value="{{.Data.FromDate}}" />
+              </div>
+              <div class="ppe-field !mb-0">
+                <label for="to-date">{{call .T "to_date"}}</label>
+                <input id="to-date" type="date" name="to" class="ppe-input" value="{{.Data.ToDate}}" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="ppe-field !mb-0">
+                <label for="employee-filter">{{call .T "employee"}}</label>
+                <select id="employee-filter" name="employee_id" class="ppe-select">
+                  <option value="">{{call .T "all"}}</option>
+                  {{range .Data.Employees}}
+                    <option value="{{.ID}}" {{if eq .ID $.Data.SelectedEmployeeID}}selected{{end}}>{{.Name}}</option>
+                  {{end}}
+                </select>
+              </div>
+              <div class="ppe-field !mb-0">
+                <label for="department-filter">{{call .T "department"}}</label>
+                <select id="department-filter" name="department_id" class="ppe-select">
+                  <option value="">{{call .T "all"}}</option>
+                  {{range .Data.Departments}}
+                    <option value="{{.ID}}" {{if eq .ID $.Data.SelectedDepartmentID}}selected{{end}}>{{.Name}}</option>
+                  {{end}}
+                </select>
+              </div>
+              <div class="ppe-field !mb-0">
+                <label for="item-filter">{{call .T "item"}}</label>
+                <select id="item-filter" name="item_id" class="ppe-select">
+                  <option value="">{{call .T "all"}}</option>
+                  {{range .Data.Items}}
+                    <option value="{{.ID}}" {{if eq .ID $.Data.SelectedItemID}}selected{{end}}>{{.Name}}</option>
+                  {{end}}
+                </select>
+              </div>
+            </div>
+
+            <div class="ppe-form-actions !mt-0">
+              <button type="submit" class="ppe-btn-filter">{{call .T "apply"}}</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="ppe-panel">
+            <div class="text-xs uppercase tracking-wide text-slate-500">{{call .T "total_stock"}}</div>
+            <div class="mt-1 text-2xl font-bold">{{.Data.TotalStock}}</div>
+          </div>
+          <div class="ppe-panel">
+            <div class="text-xs uppercase tracking-wide text-slate-500">{{call .T "total_issued"}}</div>
+            <div class="mt-1 text-2xl font-bold">{{.Data.TotalIssued}}</div>
+          </div>
+          <div class="ppe-panel">
+            <div class="text-xs uppercase tracking-wide text-slate-500">{{call .T "total_returned"}}</div>
+            <div class="mt-1 text-2xl font-bold">{{.Data.TotalReturned}}</div>
+          </div>
+        </div>
+
+        <div class="ppe-panel">
+          <h2 class="font-semibold mb-2">{{call .T "employee_activity"}}</h2>
+          <div class="relative h-64">
+            <canvas id="employeeActivityChart"></canvas>
+          </div>
+        </div>
+
+        <div class="ppe-panel">
+          <h2 class="font-semibold mb-2">{{call .T "inventory_over_time"}}</h2>
+          <div class="relative h-64">
+            <canvas id="inventoryChart"></canvas>
+          </div>
+        </div>
+
+        <div class="ppe-panel">
+          <h2 class="font-semibold mb-2">{{call .T "dept_usage"}} - {{call .T "item_distribution"}}</h2>
+          <div class="relative h-72">
+            <canvas id="deptUsageChart"></canvas>
+          </div>
+        </div>
+
+        <div class="ppe-panel">
+          <h2 class="font-semibold mb-2">{{call .T "low_stock"}}</h2>
+          {{if .Data.LowStockItems}}
+            <div class="space-y-2">
+              <div class="grid grid-cols-2 gap-3 px-3 text-sm font-semibold text-slate-600">
+                <div>{{call .T "item"}}</div>
+                <div class="text-right">{{call .T "quantity"}}</div>
+              </div>
+              {{range .Data.LowStockItems}}
+                <div class="grid grid-cols-2 gap-3 rounded border border-slate-200 bg-white px-3 py-2">
+                  <div class="font-medium ppe-ellipsis" title="{{.Name}}">{{.Name}}</div>
+                  <div class="text-sm text-slate-600 text-right"><strong>{{.Quantity}}</strong></div>
+                </div>
+              {{end}}
+            </div>
+          {{else}}
+            <p class="text-sm text-slate-500">{{call .T "no_low_stock"}}</p>
+          {{end}}
+        </div>
+
+        <div class="ppe-panel">
+          <h2 class="font-semibold mb-2">{{call .T "expiring_items"}}</h2>
+          {{if .Data.ExpiringItems}}
+            <div class="space-y-2">
+              <div class="grid grid-cols-2 gap-3 px-3 text-sm font-semibold text-slate-600">
+                <div>{{call .T "item"}}</div>
+                <div class="text-right">{{call .T "expiry_date"}}</div>
+              </div>
+              {{range .Data.ExpiringItems}}
+                <div class="grid grid-cols-2 gap-3 rounded border border-slate-200 bg-white px-3 py-2">
+                  <div class="font-medium ppe-ellipsis" title="{{.Name}}">{{.Name}}</div>
+                  <div class="text-sm text-slate-600 text-right ppe-ellipsis" title="{{.ExpiryDate}}"><strong>{{.ExpiryDate}}</strong></div>
+                </div>
+              {{end}}
+            </div>
+          {{else}}
+            <p class="text-sm text-slate-500">{{call .T "no_expiring_items"}}</p>
+          {{end}}
+        </div>
+
+      </div>
+    </div>
+    <script>
+      const lineLabels = [{{range $i, $v := .Data.LineLabels}}{{if $i}},{{end}}"{{$v}}"{{end}}];
+      const issuedCounts = [{{range $i, $v := .Data.IssuedCounts}}{{if $i}},{{end}}{{$v}}{{end}}];
+      const returnedCounts = [{{range $i, $v := .Data.ReturnedCounts}}{{if $i}},{{end}}{{$v}}{{end}}];
+      const barLabels = [{{range $i, $v := .Data.BarLabels}}{{if $i}},{{end}}"{{$v}}"{{end}}];
+      const itemQuantities = [{{range $i, $v := .Data.ItemQuantities}}{{if $i}},{{end}}{{$v}}{{end}}];
+      const deptLabels = [{{range $i, $v := .Data.DeptLabels}}{{if $i}},{{end}}"{{$v}}"{{end}}];
+      const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
+      const deptUsageDatasets = [
+        {{range $i, $ds := .Data.DeptUsageDatasets}}{{if $i}},{{end}}{
+          label: "{{$ds.Label}}",
+          data: [{{range $j, $n := $ds.Data}}{{if $j}},{{end}}{{$n}}{{end}}],
+          backgroundColor: "{{$ds.BackgroundColor}}",
+          borderColor: "{{$ds.BorderColor}}",
+          borderWidth: {{$ds.BorderWidth}}
+        }{{end}}
+      ];
+
+      const employeeCtx = document.getElementById('employeeActivityChart');
+      if (employeeCtx) {
+        new Chart(employeeCtx, {
+          type: 'line',
+          data: {
+            labels: lineLabels,
+            datasets: [
+              {
+                label: '{{call .T "issued"}}',
+                data: issuedCounts,
+                borderColor: '#2563eb',
+                backgroundColor: 'rgba(37, 99, 235, 0.2)',
+                tension: 0.2
+              },
+              {
+                label: '{{call .T "returned"}}',
+                data: returnedCounts,
+                borderColor: '#16a34a',
+                backgroundColor: 'rgba(22, 163, 74, 0.2)',
+                tension: 0.2
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                ticks: {
+                  autoSkip: !isDesktop,
+                  maxRotation: isDesktop ? 0 : 45,
+                  minRotation: 0
+                }
+              }
+            },
+            plugins: {
+              legend: {
+                labels: {
+                  usePointStyle: true,
+                  pointStyle: 'circle',
+                  boxWidth: 8,
+                  boxHeight: 8
+                }
+              }
+            }
+          }
+        });
+      }
+
+      const inventoryCtx = document.getElementById('inventoryChart');
+      if (inventoryCtx) {
+        new Chart(inventoryCtx, {
+          type: 'bar',
+          data: {
+            labels: barLabels,
+            datasets: [
+              {
+                label: '{{call .T "item_quantity"}}',
+                data: itemQuantities,
+                backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                borderColor: '#2563eb',
+                borderWidth: 1
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                ticks: {
+                  autoSkip: !isDesktop,
+                  maxRotation: isDesktop ? 0 : 45,
+                  minRotation: 0
+                }
+              }
+            },
+            plugins: {
+              legend: {
+                labels: {
+                  usePointStyle: true,
+                  pointStyle: 'circle',
+                  boxWidth: 8,
+                  boxHeight: 8
+                }
+              }
+            }
+          }
+        });
+      }
+
+      const deptUsageCtx = document.getElementById('deptUsageChart');
+      if (deptUsageCtx) {
+        new Chart(deptUsageCtx, {
+          type: 'bar',
+          data: {
+            labels: deptLabels,
+            datasets: deptUsageDatasets
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                labels: {
+                  usePointStyle: true,
+                  pointStyle: 'circle',
+                  boxWidth: 8,
+                  boxHeight: 8
+                }
+              }
+            },
+            scales: {
+              x: {
+                stacked: true,
+                ticks: {
+                  autoSkip: !isDesktop,
+                  maxRotation: isDesktop ? 0 : 45,
+                  minRotation: 0
+                }
+              },
+              y: { stacked: true }
+            }
+          }
+        });
+      }
+
+      const pdfBtn = document.getElementById('downloadDashboardPdfBtn');
+      if (pdfBtn && window.html2canvas && window.jspdf) {
+        pdfBtn.addEventListener('click', async function () {
+          const originalText = pdfBtn.textContent;
+          pdfBtn.disabled = true;
+          pdfBtn.textContent = '{{call .T "preparing_pdf"}}';
+
+          try {
+            const exportRoot = document.getElementById('dashboardExportRoot');
+            await new Promise((resolve) => requestAnimationFrame(resolve));
+            await new Promise((resolve) => setTimeout(resolve, 250));
+
+            const canvas = await window.html2canvas(exportRoot, {
+              backgroundColor: '#ffffff',
+              scale: 2,
+              useCORS: true
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const margin = 8;
+            const contentWidth = pageWidth - margin * 2;
+            const contentHeight = (canvas.height * contentWidth) / canvas.width;
+
+            if (contentHeight <= pageHeight - margin * 2) {
+              pdf.addImage(imgData, 'PNG', margin, margin, contentWidth, contentHeight);
+            } else {
+              const pageCanvas = document.createElement('canvas');
+              const pageCtx = pageCanvas.getContext('2d');
+              const pagePixelHeight = Math.floor((pageHeight - margin * 2) * (canvas.width / contentWidth));
+              pageCanvas.width = canvas.width;
+              pageCanvas.height = pagePixelHeight;
+
+              let renderedHeight = 0;
+              let pageIndex = 0;
+              while (renderedHeight < canvas.height) {
+                pageCtx.clearRect(0, 0, pageCanvas.width, pageCanvas.height);
+                pageCtx.drawImage(
+                  canvas,
+                  0,
+                  renderedHeight,
+                  pageCanvas.width,
+                  Math.min(pagePixelHeight, canvas.height - renderedHeight),
+                  0,
+                  0,
+                  pageCanvas.width,
+                  Math.min(pagePixelHeight, canvas.height - renderedHeight)
+                );
+
+                const pageImg = pageCanvas.toDataURL('image/png');
+                if (pageIndex > 0) {
+                  pdf.addPage();
+                }
+                const currentSliceHeight = Math.min(pagePixelHeight, canvas.height - renderedHeight);
+                const currentSliceMm = (currentSliceHeight * contentWidth) / canvas.width;
+                pdf.addImage(pageImg, 'PNG', margin, margin, contentWidth, currentSliceMm);
+
+                renderedHeight += pagePixelHeight;
+                pageIndex += 1;
+              }
+            }
+
+            pdf.save('dashboard_report.pdf');
+          } catch (err) {
+            alert('{{call .T "pdf_failed"}}');
+          } finally {
+            pdfBtn.disabled = false;
+            pdfBtn.textContent = originalText;
+          }
+        });
+      }
+    </script>
+  </body>
+</html>

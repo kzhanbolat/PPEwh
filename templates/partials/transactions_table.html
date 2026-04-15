@@ -1,40 +1,38 @@
-<div class="bg-white border rounded-xl p-4">
-  <h2 class="text-lg font-semibold mb-3">{{call .T "transaction_history"}}</h2>
-
-  <div class="overflow-x-auto">
-    <table class="min-w-full text-sm">
+<div class="ppe-table-card">
+  <h2 class="ppe-table-title">{{call .T "transaction_history"}}</h2>
+  <div class="ppe-table-scroll">
+    <table class="ppe-table">
       <thead>
-        <tr class="text-left text-gray-600">
-          <th class="py-2 pr-3">{{call .T "timestamp"}}</th>
-          <th class="py-2 pr-3">{{call .T "type"}}</th>
-          <th class="py-2 pr-3">{{call .T "issued_to"}}</th>
-          <th class="py-2 pr-3">{{call .T "issued_by"}}</th>
-          <th class="py-2 pr-3">{{call .T "department"}}</th>
-          <th class="py-2 pr-3">{{call .T "item"}}</th>
-          <th class="py-2">{{call .T "qty"}}</th>
+        <tr>
+          <th>{{call .T "timestamp"}}</th>
+          <th>{{call .T "type"}}</th>
+          <th>{{call .T "issued_to"}}</th>
+          <th>{{call .T "issued_by"}}</th>
+          <th>{{call .T "department"}}</th>
+          <th>{{call .T "item"}}</th>
+          <th>{{call .T "qty"}}</th>
         </tr>
       </thead>
       <tbody>
         {{range .Transactions}}
-          <tr class="border-t">
-            <td class="py-2 pr-3 font-mono text-xs text-gray-800">{{.Timestamp}}</td>
-            <td class="py-2 pr-3">{{.EventType}}</td>
-            <td class="py-2 pr-3">{{.IssuedToUserName}}</td>
-            <td class="py-2 pr-3">{{.IssuedByUserName}}</td>
-            <td class="py-2 pr-3">{{.DepartmentName}}</td>
-            <td class="py-2 pr-3">
-              <div class="font-medium">{{.ItemName}}</div>
+          <tr>
+            <td class="ppe-mono"><span class="ppe-ellipsis-inline" title="{{.Timestamp}}">{{.Timestamp}}</span></td>
+            <td><span class="ppe-ellipsis-inline" title="{{.EventType}}">{{.EventType}}</span></td>
+            <td><span class="ppe-ellipsis-inline" title="{{.IssuedToUserName}}">{{.IssuedToUserName}}</span></td>
+            <td><span class="ppe-ellipsis-inline" title="{{.IssuedByUserName}}">{{.IssuedByUserName}}</span></td>
+            <td><span class="ppe-ellipsis-inline" title="{{.DepartmentName}}">{{.DepartmentName}}</span></td>
+            <td>
+              <div class="font-semibold text-slate-800 ppe-ellipsis-inline" title="{{.ItemName}}">{{.ItemName}}</div>
             </td>
-            <td class="py-2 font-semibold">{{.Quantity}}</td>
+            <td><strong>{{.Quantity}}</strong></td>
           </tr>
         {{end}}
         {{if not .Transactions}}
-          <tr class="border-t">
-            <td colspan="7" class="py-4 text-gray-500">{{call .T "no_transactions"}}</td>
+          <tr>
+            <td colspan="7" class="ppe-empty">{{call .T "no_transactions"}}</td>
           </tr>
         {{end}}
       </tbody>
     </table>
   </div>
 </div>
-

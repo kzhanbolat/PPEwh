@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="{{.Lang}}">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{call .T "issue_item"}}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body class="ppe-body">
+    <div class="ppe-device">
+      <div class="ppe-device-inner">
+        <header class="ppe-page-head">
+          <a class="ppe-back" href="/?lang={{.Lang}}" title="{{call .T "title"}}">←</a>
+          <h1 class="ppe-page-title">{{call .T "issue_item"}}</h1>
+          <span aria-hidden="true"></span>
+          <p class="ppe-page-sub">{{call .T "issued_to_employee"}}</p>
+        </header>
+
+        <div class="ppe-lang-row ppe-lang-row--tight">
+          <a href="/dashboard?lang={{.Lang}}">{{call .T "dashboard"}}</a>
+          <span class="text-slate-300">|</span>
+          <a href="/issue?lang=en">EN</a>
+          <span class="text-slate-300">|</span>
+          <a href="/issue?lang=ru">RU</a>
+        </div>
+
+        {{if .Success}}
+          <div class="ppe-alert ppe-alert--success" role="status">{{.Success}}</div>
+        {{end}}
+        {{if .Error}}
+          <div class="ppe-alert ppe-alert--error" role="alert">{{.Error}}</div>
+        {{end}}
+
+        <section class="ppe-panel">
+          <form class="space-y-1" action="/issue" method="post">
+            <input type="hidden" name="lang" value="{{.Lang}}" />
+
+            <div class="ppe-field">
+              <button type="button" class="ppe-section-bar">
+                <span class="ppe-section-bar-icon" aria-hidden="true"></span>
+                <span>{{call .T "item"}}</span>
+              </button>
+              <select name="item_id" class="ppe-select" required>
+                <option value="">{{call .T "select_item"}}</option>
+                {{range .Data.Items}}
+                  <option value="{{.ID}}" title="{{.Name}} — {{.Size}} ({{call $.T "qty"}}: {{.Quantity}})" {{if eq .ID $.Data.IssueForm.ItemID}}selected{{end}}>{{.Name}} — {{.Size}} ({{call $.T "qty"}}: {{.Quantity}})</option>
+                {{end}}
+              </select>
+            </div>
+
+            <div class="ppe-field">
+              <button type="button" class="ppe-section-bar">
+                <span class="ppe-section-bar-icon" aria-hidden="true"></span>
+                <span>{{call .T "issued_to_employee"}}</span>
+              </button>
+              <input
+                name="issued_to_user_name"
+                type="text"
+                class="ppe-input"
+                placeholder="{{call .T "user_name"}}"
+                value="{{.Data.IssueForm.IssuedToUserName}}"
+                required
+              />
+            </div>
+
+            <div class="ppe-field">
+              <button type="button" class="ppe-section-bar">
+                <span class="ppe-section-bar-icon" aria-hidden="true"></span>
+                <span>{{call .T "issued_by_warehouse"}}</span>
+              </button>
+              <select name="issued_by_user_id" class="ppe-select" required>
+                <option value="">{{call .T "select_warehouse_staff"}}</option>
+                {{range .Data.WarehouseStaff}}
+                  <option value="{{.ID}}" title="{{.Name}}" {{if eq .ID $.Data.IssueForm.IssuedByUserID}}selected{{end}}>{{.Name}}</option>
+                {{end}}
+              </select>
+            </div>
+
+            <div class="ppe-field">
+              <label for="issue-qty">{{call .T "quantity"}}</label>
+              <input id="issue-qty" name="quantity" type="number" min="1" value="{{if .Data.IssueForm.Quantity}}{{.Data.IssueForm.Quantity}}{{else}}1{{end}}" class="ppe-input" required />
+            </div>
+
+            <div class="ppe-form-actions">
+              <button class="ppe-btn-cta" type="submit">{{call .T "record_issue"}}</button>
+            </div>
+          </form>
+        </section>
+      </div>
+    </div>
+  </body>
+</html>

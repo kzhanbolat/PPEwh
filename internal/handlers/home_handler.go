@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -36,56 +37,19 @@ func NewHomeHandler(itemsSvc *services.ItemsService, usersSvc *services.UsersSer
 func (h *HomeHandler) Dashboard(c *gin.Context) {
 	lang := getLang(c)
 	t := translator(lang)
-
-	items, err := h.itemsSvc.List()
-	if err != nil {
-		c.HTML(http.StatusInternalServerError, "index.html", PageData{
-			Lang:  lang,
-			T:     t,
-			Error: "failed to load items",
-			Data:  DashboardPageData{},
-		})
-		return
-	}
-	users, err := h.usersSvc.List()
-	if err != nil {
-		c.HTML(http.StatusInternalServerError, "index.html", PageData{
-			Lang:  lang,
-			T:     t,
-			Error: "failed to load users",
-			Data:  DashboardPageData{},
-		})
-		return
-	}
-
-	rowsData := listTransactionsTableRows(h.txSvc, h.usersSvc, h.deptsSvc)
-	rowsData.Lang = lang
-	rowsData.T = t
-
-	returnOptions := h.buildReturnIssueOptions(users, rowsData.Transactions)
-	pageData := DashboardPageData{
-		Items:                 items,
-		IssuedToUsers:         filterUsers(users, false),
-		WarehouseStaff:        filterUsers(users, true),
-		ReturnIssueOptions:   returnOptions,
-		Error:                 "",
-		IssueForm:             IssueFormData{Quantity: "1"},
-		ReturnForm:           ReturnFormData{QuantityReturned: "1"},
-		TransactionsTableData: rowsData,
-	}
-	c.HTML(http.StatusOK, "index.html", PageData{
+	c.HTML(http.StatusOK, "main.html", PageData{
 		Lang:    lang,
 		T:       t,
 		Success: "",
 		Error:   "",
-		Data:    pageData,
+		Data:    nil,
 	})
 }
 
 func filterUsers(users []models.User, warehouseOnly bool) []models.User {
 	out := make([]models.User, 0, len(users))
 	for _, u := range users {
-		isWarehouse := u.Role == "warehouse"
+		isWarehouse := strings.EqualFold(strings.TrimSpace(u.Role), "warehouse")
 		if warehouseOnly {
 			if isWarehouse {
 				out = append(out, u)
@@ -134,13 +98,21 @@ func listTransactionsTableRows(txSvc *services.TransactionsService, usersSvc *se
 		toUser := userMap[tx.IssuedToUserID]
 		byUser := userMap[tx.IssuedByUserID]
 		dept := deptMap[tx.DepartmentID]
+		toName := toUser.Name
+		if toName == "" {
+			toName = tx.IssuedToUserID
+		}
+		byName := byUser.Name
+		if byName == "" {
+			byName = tx.IssuedByUserID
+		}
 		rows = append(rows, TransactionRow{
 			EventType:         "issue",
 			Timestamp:        tx.Timestamp,
 			ItemName:         tx.ItemName,
 			Quantity:         tx.Quantity,
-			IssuedToUserName: toUser.Name,
-			IssuedByUserName: byUser.Name,
+			IssuedToUserName: toName,
+			IssuedByUserName: byName,
 			DepartmentName:   dept.Name,
 		})
 	}
@@ -150,13 +122,21 @@ func listTransactionsTableRows(txSvc *services.TransactionsService, usersSvc *se
 		byUser := userMap[ret.ReceivedByUserID]
 		dept := deptMap[ret.DepartmentID]
 		issueTx := issueByID[ret.TransactionID]
+		toName := toUser.Name
+		if toName == "" {
+			toName = ret.ReturnedByUserID
+		}
+		byName := byUser.Name
+		if byName == "" {
+			byName = ret.ReceivedByUserID
+		}
 		rows = append(rows, TransactionRow{
 			EventType:         "return",
 			Timestamp:        ret.Timestamp,
 			ItemName:         issueTx.ItemName,
 			Quantity:         ret.QuantityReturned,
-			IssuedToUserName: toUser.Name,
-			IssuedByUserName: byUser.Name,
+			IssuedToUserName: toName,
+			IssuedByUserName: byName,
 			DepartmentName:   dept.Name,
 		})
 	}

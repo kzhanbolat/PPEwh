@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"bytes"
+	"encoding/csv"
 	"net/http"
 	"strconv"
 
@@ -65,5 +67,35 @@ func (h *ItemsHandler) Add(c *gin.Context) {
 	}
 
 	c.HTML(http.StatusOK, "items_table.html", ItemsTableData{Lang: lang, T: t, Items: items, Success: t("item_added_success")})
+}
+
+func (h *ItemsHandler) Export(c *gin.Context) {
+	items, err := h.itemsSvc.List()
+	if err != nil {
+		c.String(http.StatusInternalServerError, "failed to load items")
+		return
+	}
+
+	var buf bytes.Buffer
+	w := csv.NewWriter(&buf)
+	_ = w.Write([]string{"id", "name", "size", "quantity", "issue_date", "expiry_date"})
+	for _, it := range items {
+		_ = w.Write([]string{
+			it.ID,
+			it.Name,
+			it.Size,
+			strconv.Itoa(it.Quantity),
+			it.IssueDate,
+			it.ExpiryDate,
+		})
+	}
+	w.Flush()
+	if err := w.Error(); err != nil {
+		c.String(http.StatusInternalServerError, "failed to build export")
+		return
+	}
+
+	c.Header("Content-Disposition", `attachment; filename="items_export.csv"`)
+	c.Data(http.StatusOK, "text/csv; charset=utf-8", buf.Bytes())
 }
 

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{{call .T "items"}}</title>
+    <title>{{call .T "users"}}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
@@ -12,20 +12,20 @@
       <div class="ppe-device-inner">
         <header class="ppe-page-head">
           <a class="ppe-back" href="/?lang={{.Lang}}" title="{{call .T "title"}}">←</a>
-          <h1 class="ppe-page-title">{{call .T "items"}}</h1>
-          <a class="ppe-head-action" href="/items/export?lang={{.Lang}}">{{call .T "download_excel"}}</a>
-          <p class="ppe-page-sub">{{call .T "add_item"}}</p>
+          <h1 class="ppe-page-title">{{call .T "warehouse_users"}}</h1>
+          <a class="ppe-head-action" href="/employees/export?lang={{.Lang}}">{{call .T "download_excel"}}</a>
+          <p class="ppe-page-sub">{{call .T "add_user"}}</p>
         </header>
 
         <div class="ppe-lang-row ppe-lang-row--tight">
           <a href="/dashboard?lang={{.Lang}}">{{call .T "dashboard"}}</a>
           <span class="text-slate-300">|</span>
-          <a href="/items?lang=en">EN</a>
+          <a href="/employees?lang=en">EN</a>
           <span class="text-slate-300">|</span>
-          <a href="/items?lang=ru">RU</a>
+          <a href="/employees?lang=ru">RU</a>
         </div>
 
-        {{template "items_table.html" .}}
+        {{template "users_table.html" .}}
       </div>
     </div>
 

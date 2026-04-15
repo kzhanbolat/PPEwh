@@ -45,6 +45,7 @@ type ReturnIssueOption struct {
 
 type IssueFormData struct {
 	IssuedToUserID string
+	IssuedToUserName string
 	IssuedByUserID string
 	ItemID         string
 	Quantity       string
@@ -52,6 +53,7 @@ type IssueFormData struct {
 
 type ReturnFormData struct {
 	TransactionID    string
+	ReturnedByUserName string
 	QuantityReturned string
 	ReceivedByUserID string
 }

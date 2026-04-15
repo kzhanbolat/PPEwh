@@ -1,84 +1,82 @@
-<div id="items-table-wrap" class="mt-6">
+<div id="items-table-wrap" class="ppe-stack">
   {{if .Error}}
-    <div class="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-red-700">
-      {{.Error}}
-    </div>
+    <div class="ppe-alert ppe-alert--error" role="alert">{{.Error}}</div>
   {{end}}
   {{if .Success}}
-    <div class="mb-4 rounded border border-green-200 bg-green-50 px-3 py-2 text-green-700">
-      {{.Success}}
-    </div>
+    <div class="ppe-alert ppe-alert--success" role="status">{{.Success}}</div>
   {{end}}
 
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <div class="bg-white border rounded-xl p-4">
-      <h2 class="text-lg font-semibold mb-3">{{call .T "current_items"}}</h2>
-      <div class="overflow-x-auto">
-        <table class="min-w-full text-sm">
-          <thead>
-            <tr class="text-left text-gray-600">
-              <th class="py-2 pr-3">ID</th>
-              <th class="py-2 pr-3">{{call .T "name"}}</th>
-              <th class="py-2 pr-3">{{call .T "size"}}</th>
-              <th class="py-2">{{call .T "quantity"}}</th>
-              <th class="py-2 pr-3">{{call .T "issue_date"}}</th>
-              <th class="py-2 pr-3">{{call .T "expiry_date"}}</th>
+  <div class="ppe-table-card">
+    <h2 class="ppe-table-title">{{call .T "current_items"}}</h2>
+    <div class="ppe-table-scroll">
+      <table class="ppe-table">
+        <thead>
+          <tr>
+            <th>{{call .T "id"}}</th>
+            <th>{{call .T "name"}}</th>
+            <th>{{call .T "size"}}</th>
+            <th>{{call .T "quantity"}}</th>
+            <th>{{call .T "issue_date"}}</th>
+            <th>{{call .T "expiry_date"}}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .Items}}
+            <tr>
+              <td class="ppe-mono"><span class="ppe-ellipsis-inline" title="{{.ID}}">{{.ID}}</span></td>
+              <td><span class="ppe-ellipsis-inline" title="{{.Name}}">{{.Name}}</span></td>
+              <td><span class="ppe-ellipsis-inline" title="{{.Size}}">{{.Size}}</span></td>
+              <td><strong>{{.Quantity}}</strong></td>
+              <td class="ppe-mono"><span class="ppe-ellipsis-inline" title="{{.IssueDate}}">{{.IssueDate}}</span></td>
+              <td class="ppe-mono"><span class="ppe-ellipsis-inline" title="{{.ExpiryDate}}">{{.ExpiryDate}}</span></td>
             </tr>
-          </thead>
-          <tbody>
-            {{range .Items}}
-              <tr class="border-t">
-                <td class="py-2 pr-3 font-mono text-xs text-gray-800">{{.ID}}</td>
-                <td class="py-2 pr-3">{{.Name}}</td>
-                <td class="py-2 pr-3">{{.Size}}</td>
-                <td class="py-2 font-semibold">{{.Quantity}}</td>
-                <td class="py-2 pr-3 font-mono text-xs text-gray-800">{{.IssueDate}}</td>
-                <td class="py-2 pr-3 font-mono text-xs text-gray-800">{{.ExpiryDate}}</td>
-              </tr>
-            {{end}}
-            {{if not .Items}}
-              <tr class="border-t">
-                <td colspan="6" class="py-4 text-gray-500">{{call .T "no_items"}}</td>
-              </tr>
-            {{end}}
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="bg-white border rounded-xl p-4">
-      <h2 class="text-lg font-semibold mb-3">{{call .T "add_item"}}</h2>
-      <form class="space-y-3"
-            hx-post="/items?lang={{.Lang}}"
-            hx-target="#items-table-wrap"
-            hx-swap="outerHTML"
-            method="post">
-        <input type="hidden" name="lang" value="{{.Lang}}" />
-        <div>
-          <label class="block text-sm font-medium mb-1">{{call .T "name"}}</label>
-          <input name="name" class="w-full border rounded px-3 py-2" required />
-        </div>
-        <div>
-          <label class="block text-sm font-medium mb-1">{{call .T "size"}}</label>
-          <input name="size" class="w-full border rounded px-3 py-2" required />
-        </div>
-        <div>
-          <label class="block text-sm font-medium mb-1">{{call .T "quantity"}}</label>
-          <input name="quantity" type="number" min="1" value="1" class="w-full border rounded px-3 py-2" required />
-        </div>
-        <div>
-          <label class="block text-sm font-medium mb-1">{{call .T "issue_date"}}</label>
-          <input name="issue_date" type="date" class="w-full border rounded px-3 py-2" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium mb-1">{{call .T "expiry_date"}}</label>
-          <input name="expiry_date" type="date" class="w-full border rounded px-3 py-2" />
-        </div>
-        <button class="w-full bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700" type="submit">
-          {{call .T "add_item"}}
-        </button>
-      </form>
+          {{end}}
+          {{if not .Items}}
+            <tr>
+              <td colspan="6" class="ppe-empty">{{call .T "no_items"}}</td>
+            </tr>
+          {{end}}
+        </tbody>
+      </table>
     </div>
   </div>
-</div>
 
+  <div class="ppe-panel">
+    <button type="button" class="ppe-section-bar">
+      <span class="ppe-section-bar-icon" aria-hidden="true"></span>
+      <span>{{call .T "add_item"}}</span>
+    </button>
+    <form
+      class="space-y-3 mt-2"
+      hx-post="/items?lang={{.Lang}}"
+      hx-target="#items-table-wrap"
+      hx-swap="outerHTML"
+      method="post"
+    >
+      <input type="hidden" name="lang" value="{{.Lang}}" />
+      <div class="ppe-field">
+        <label for="add-item-name">{{call .T "name"}}</label>
+        <input id="add-item-name" name="name" class="ppe-input" required />
+      </div>
+      <div class="ppe-field">
+        <label for="add-item-size">{{call .T "size"}}</label>
+        <input id="add-item-size" name="size" class="ppe-input" required />
+      </div>
+      <div class="ppe-field">
+        <label for="add-item-qty">{{call .T "quantity"}}</label>
+        <input id="add-item-qty" name="quantity" type="number" min="1" value="1" class="ppe-input" required />
+      </div>
+      <div class="ppe-field">
+        <label for="add-item-issue">{{call .T "issue_date"}}</label>
+        <input id="add-item-issue" name="issue_date" type="date" class="ppe-input" />
+      </div>
+      <div class="ppe-field">
+        <label for="add-item-expiry">{{call .T "expiry_date"}}</label>
+        <input id="add-item-expiry" name="expiry_date" type="date" class="ppe-input" />
+      </div>
+      <div class="ppe-form-actions">
+        <button class="ppe-btn-cta" type="submit">{{call .T "add_item"}}</button>
+      </div>
+    </form>
+  </div>
+</div>

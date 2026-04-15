@@ -1,31 +1,34 @@
 <!doctype html>
-<html lang="en">
+<html lang="{{.Lang}}">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{{call .T "users"}}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/styles.css" />
   </head>
-  <body class="bg-gray-50 text-gray-900">
-    <div class="max-w-5xl mx-auto px-4 py-6">
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-2xl font-bold">{{call .T "warehouse_users"}}</h1>
-          <p class="text-sm text-gray-600">{{call .T "add_user"}}</p>
-        </div>
-        <nav class="text-sm">
-          <a class="text-blue-600 hover:underline mr-3" href="/?lang={{.Lang}}">Dashboard</a>
-          <a class="text-blue-600 hover:underline mr-3" href="/items?lang={{.Lang}}">{{call .T "items"}}</a>
-          <a class="text-blue-600 hover:underline mr-3" href="/transactions?lang={{.Lang}}">{{call .T "transactions"}}</a>
-          <a class="text-blue-600 hover:underline" href="/users?lang=en">EN</a> |
-          <a class="text-blue-600 hover:underline" href="/users?lang=ru">RU</a>
-        </nav>
-      </div>
+  <body class="ppe-body">
+    <div class="ppe-device">
+      <div class="ppe-device-inner">
+        <header class="ppe-page-head">
+          <a class="ppe-back" href="/?lang={{.Lang}}" title="{{call .T "title"}}">←</a>
+          <h1 class="ppe-page-title">{{call .T "warehouse_users"}}</h1>
+          <span aria-hidden="true"></span>
+          <p class="ppe-page-sub">{{call .T "add_user"}}</p>
+        </header>
 
-      {{template "users_table.html" .}}
+        <div class="ppe-lang-row ppe-lang-row--tight">
+          <a href="/dashboard?lang={{.Lang}}">{{call .T "dashboard"}}</a>
+          <span class="text-slate-300">|</span>
+          <a href="/users?lang=en">EN</a>
+          <span class="text-slate-300">|</span>
+          <a href="/users?lang=ru">RU</a>
+        </div>
+
+        {{template "users_table.html" .}}
+      </div>
     </div>
 
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
   </body>
 </html>
-

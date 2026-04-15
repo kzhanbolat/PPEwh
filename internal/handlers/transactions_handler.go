@@ -1,6 +1,9 @@
 package handlers
 
 import (
+	"bytes"
+	"encoding/csv"
+	"errors"
 	"net/http"
 	"regexp"
 	"sort"
@@ -80,9 +83,72 @@ func (h *TransactionsHandler) History(c *gin.Context) {
 	})
 }
 
+func (h *TransactionsHandler) Export(c *gin.Context) {
+	_, rows, err := h.listTransactionRows()
+	if err != nil {
+		c.String(http.StatusInternalServerError, "failed to load transactions")
+		return
+	}
+
+	userName := strings.ToLower(c.Query("user_name"))
+	issuedBy := strings.ToLower(c.Query("issued_by"))
+	itemName := strings.ToLower(c.Query("item_name"))
+	txType := c.Query("type")
+
+	filtered := make([]TransactionRow, 0, len(rows))
+	for _, t := range rows {
+		if userName != "" && !strings.Contains(strings.ToLower(t.IssuedToUserName), userName) {
+			continue
+		}
+		if issuedBy != "" && !strings.Contains(strings.ToLower(t.IssuedByUserName), issuedBy) {
+			continue
+		}
+		if itemName != "" && !strings.Contains(strings.ToLower(t.ItemName), itemName) {
+			continue
+		}
+		if txType != "" && strings.ToUpper(t.EventType) != txType {
+			continue
+		}
+		filtered = append(filtered, t)
+	}
+
+	var buf bytes.Buffer
+	w := csv.NewWriter(&buf)
+	_ = w.Write([]string{"timestamp", "type", "issued_to", "issued_by", "department", "item", "quantity"})
+	for _, row := range filtered {
+		_ = w.Write([]string{
+			row.Timestamp,
+			row.EventType,
+			row.IssuedToUserName,
+			row.IssuedByUserName,
+			row.DepartmentName,
+			row.ItemName,
+			strconv.Itoa(row.Quantity),
+		})
+	}
+	w.Flush()
+	if err := w.Error(); err != nil {
+		c.String(http.StatusInternalServerError, "failed to build export")
+		return
+	}
+
+	c.Header("Content-Disposition", `attachment; filename="transactions_export.csv"`)
+	c.Data(http.StatusOK, "text/csv; charset=utf-8", buf.Bytes())
+}
+
+func (h *TransactionsHandler) IssuePage(c *gin.Context) {
+	issueForm := IssueFormData{Quantity: "1"}
+	h.renderIssuePage(c, http.StatusOK, issueForm, "", "")
+}
+
+func (h *TransactionsHandler) ReturnPage(c *gin.Context) {
+	returnForm := ReturnFormData{QuantityReturned: "1"}
+	h.renderReturnPage(c, http.StatusOK, returnForm, "", "")
+}
+
 func (h *TransactionsHandler) Issue(c *gin.Context) {
 	issueForm := IssueFormData{
-		IssuedToUserID: c.PostForm("issued_to_user_id"),
+		IssuedToUserName: c.PostForm("issued_to_user_name"),
 		IssuedByUserID: c.PostForm("issued_by_user_id"),
 		ItemID:         c.PostForm("item_id"),
 		Quantity:       c.PostForm("quantity"),
@@ -93,90 +159,134 @@ func (h *TransactionsHandler) Issue(c *gin.Context) {
 
 	qty, err := strconv.Atoi(issueForm.Quantity)
 	if err != nil {
-		h.renderDashboardRoot(c, http.StatusBadRequest, issueForm, ReturnFormData{QuantityReturned: "1"}, "quantity must be a number", "", "")
+		h.renderIssuePage(c, http.StatusBadRequest, issueForm, "quantity must be a number", "")
 		return
 	}
 
-	_, err = h.txSvc.IssueItem(issueForm.ItemID, qty, issueForm.IssuedToUserID, issueForm.IssuedByUserID)
+	issuedToUserID, resolveErr := h.resolveUserIDByName(issueForm.IssuedToUserName)
+	if resolveErr != nil {
+		h.renderIssuePage(c, http.StatusBadRequest, issueForm, resolveErr.Error(), "")
+		return
+	}
+	issueForm.IssuedToUserID = issuedToUserID
+
+	_, err = h.txSvc.IssueItem(issueForm.ItemID, qty, issuedToUserID, issueForm.IssuedByUserID)
 	if err != nil {
-		// DO NOT redirect on error; render same page and preserve user input.
-		h.renderDashboardRoot(c, http.StatusBadRequest, issueForm, ReturnFormData{QuantityReturned: "1"}, localizeIssueError(getLang(c), err.Error()), "", "")
+		h.renderIssuePage(c, http.StatusBadRequest, issueForm, localizeIssueError(getLang(c), err.Error()), "")
 		return
 	}
 
-	// Success: keep user on same page; reset issue form state.
-	if c.GetHeader("HX-Request") != "" {
-		empty := IssueFormData{Quantity: "1"}
-		h.renderDashboardRoot(c, http.StatusOK, empty, ReturnFormData{QuantityReturned: "1"}, "", translator(getLang(c))("issue_success"), "")
-		return
-	}
-	c.Redirect(http.StatusSeeOther, "/")
+	empty := IssueFormData{Quantity: "1"}
+	h.renderIssuePage(c, http.StatusOK, empty, "", translator(getLang(c))("issue_success"))
 }
 
 func (h *TransactionsHandler) Return(c *gin.Context) {
 	transactionID := c.PostForm("transaction_id")
 	qtyStr := c.PostForm("quantity")
+	returnedByUserName := c.PostForm("returned_by_user_name")
 	receivedByUserID := c.PostForm("received_by_user_id")
 
 	qty, err := strconv.Atoi(qtyStr)
 	if err != nil {
-		h.renderDashboardTransactions(c, "failed to parse quantity", http.StatusBadRequest)
-		return
-	}
-
-	issueTx, ok, err := h.txSvc.GetByID(transactionID)
-	if err != nil {
-		h.renderDashboardTransactions(c, err.Error(), http.StatusBadRequest)
-		return
-	}
-	if !ok {
-		h.renderDashboardTransactions(c, "transaction not found", http.StatusBadRequest)
-		return
-	}
-
-	// For MVP: returnedByUserID is the employee who originally received the PPE.
-	returnedByUserID := issueTx.IssuedToUserID
-
-	_, err = h.txSvc.ReturnItem(transactionID, qty, returnedByUserID, receivedByUserID)
-	if err != nil {
-		// For simplicity, re-render the dashboard root with an error (issue form reset).
-		empty := IssueFormData{Quantity: "1"}
 		returnForm := ReturnFormData{
 			TransactionID:    transactionID,
+			ReturnedByUserName: returnedByUserName,
 			QuantityReturned: qtyStr,
 			ReceivedByUserID: receivedByUserID,
 		}
-		h.renderDashboardRoot(c, http.StatusBadRequest, empty, returnForm, err.Error(), "", err.Error())
+		h.renderReturnPage(c, http.StatusBadRequest, returnForm, "failed to parse quantity", "")
 		return
 	}
 
-	if c.GetHeader("HX-Request") != "" {
-		empty := IssueFormData{Quantity: "1"}
-		returnForm := ReturnFormData{QuantityReturned: "1"}
-		h.renderDashboardRoot(c, http.StatusOK, empty, returnForm, "", translator(getLang(c))("return_success"), "")
+	_, ok, err := h.txSvc.GetByID(transactionID)
+	if err != nil {
+		returnForm := ReturnFormData{
+			TransactionID:    transactionID,
+			ReturnedByUserName: returnedByUserName,
+			QuantityReturned: qtyStr,
+			ReceivedByUserID: receivedByUserID,
+		}
+		h.renderReturnPage(c, http.StatusBadRequest, returnForm, err.Error(), "")
 		return
 	}
-	c.Redirect(http.StatusSeeOther, "/")
+	if !ok {
+		returnForm := ReturnFormData{
+			TransactionID:    transactionID,
+			ReturnedByUserName: returnedByUserName,
+			QuantityReturned: qtyStr,
+			ReceivedByUserID: receivedByUserID,
+		}
+		h.renderReturnPage(c, http.StatusBadRequest, returnForm, "transaction not found", "")
+		return
+	}
+
+	returnedByUserID := strings.TrimSpace(returnedByUserName)
+	if returnedByUserID == "" {
+		returnForm := ReturnFormData{
+			TransactionID:      transactionID,
+			ReturnedByUserName: returnedByUserName,
+			QuantityReturned:   qtyStr,
+			ReceivedByUserID:   receivedByUserID,
+		}
+		h.renderReturnPage(c, http.StatusBadRequest, returnForm, "returned by is required", "")
+		return
+	}
+	if resolvedID, ok := h.tryResolveUserIDByName(returnedByUserName); ok {
+		returnedByUserID = resolvedID
+	}
+
+	_, err = h.txSvc.ReturnItem(transactionID, qty, returnedByUserID, receivedByUserID)
+	if err != nil {
+		returnForm := ReturnFormData{
+			TransactionID:    transactionID,
+			ReturnedByUserName: returnedByUserName,
+			QuantityReturned: qtyStr,
+			ReceivedByUserID: receivedByUserID,
+		}
+		h.renderReturnPage(c, http.StatusBadRequest, returnForm, err.Error(), "")
+		return
+	}
+
+	returnForm := ReturnFormData{QuantityReturned: "1"}
+	h.renderReturnPage(c, http.StatusOK, returnForm, "", translator(getLang(c))("return_success"))
 }
 
-func (h *TransactionsHandler) renderDashboardTransactions(c *gin.Context, message string, status int) {
-	_, rows, err := h.listTransactionRows()
-	if err != nil {
-		c.HTML(http.StatusInternalServerError, "dashboard_transactions.html", TransactionsTableData{
-			Transactions: []TransactionRow{},
-			FlashError:   "failed to load transactions",
-		})
+func (h *TransactionsHandler) renderIssuePage(c *gin.Context, status int, issueForm IssueFormData, errMsg string, success string) {
+	lang := getLang(c)
+	tfunc := translator(lang)
+
+	data, renderErr := h.buildDashboardPageData(lang, issueForm, ReturnFormData{QuantityReturned: "1"}, errMsg, success, "")
+	if renderErr != nil {
+		c.String(http.StatusInternalServerError, "failed to render issue page")
 		return
 	}
 
-	data := TransactionsTableData{Transactions: rows}
-	if status >= 400 {
-		data.FlashError = message
-	} else {
-		data.Flash = message
+	c.HTML(status, "issue.html", PageData{
+		Lang:    lang,
+		T:       tfunc,
+		Success: success,
+		Error:   errMsg,
+		Data:    data,
+	})
+}
+
+func (h *TransactionsHandler) renderReturnPage(c *gin.Context, status int, returnForm ReturnFormData, errMsg string, success string) {
+	lang := getLang(c)
+	tfunc := translator(lang)
+
+	data, renderErr := h.buildDashboardPageData(lang, IssueFormData{Quantity: "1"}, returnForm, errMsg, success, "")
+	if renderErr != nil {
+		c.String(http.StatusInternalServerError, "failed to render return page")
+		return
 	}
 
-	c.HTML(status, "dashboard_transactions.html", data)
+	c.HTML(status, "return.html", PageData{
+		Lang:    lang,
+		T:       tfunc,
+		Success: success,
+		Error:   errMsg,
+		Data:    data,
+	})
 }
 
 func (h *TransactionsHandler) listTransactionRows() ([]models.Transaction, []TransactionRow, error) {
@@ -218,14 +328,22 @@ func (h *TransactionsHandler) listTransactionRows() ([]models.Transaction, []Tra
 		toUser := userMap[tx.IssuedToUserID]
 		byUser := userMap[tx.IssuedByUserID]
 		dept := deptMap[tx.DepartmentID]
+		toName := toUser.Name
+		if toName == "" {
+			toName = tx.IssuedToUserID
+		}
+		byName := byUser.Name
+		if byName == "" {
+			byName = tx.IssuedByUserID
+		}
 		rows = append(rows, TransactionRow{
 			EventType:         "issue",
 			Timestamp:        tx.Timestamp,
 			ItemName:         tx.ItemName,
 			Quantity:         tx.Quantity,
 			IssuedToUserID:   tx.IssuedToUserID,
-			IssuedToUserName: toUser.Name,
-			IssuedByUserName: byUser.Name,
+			IssuedToUserName: toName,
+			IssuedByUserName: byName,
 			DepartmentName:   dept.Name,
 		})
 	}
@@ -238,14 +356,22 @@ func (h *TransactionsHandler) listTransactionRows() ([]models.Transaction, []Tra
 		issueTx := issueByID[ret.TransactionID]
 		itemName := issueTx.ItemName
 
+		toName := toUser.Name
+		if toName == "" {
+			toName = ret.ReturnedByUserID
+		}
+		byName := byUser.Name
+		if byName == "" {
+			byName = ret.ReceivedByUserID
+		}
 		rows = append(rows, TransactionRow{
 			EventType:         "return",
 			Timestamp:        ret.Timestamp,
 			ItemName:         itemName,
 			Quantity:         ret.QuantityReturned,
 			IssuedToUserID:   ret.ReturnedByUserID,
-			IssuedToUserName: toUser.Name,
-			IssuedByUserName: byUser.Name,
+			IssuedToUserName: toName,
+			IssuedByUserName: byName,
 			DepartmentName:   dept.Name,
 		})
 	}
@@ -255,34 +381,6 @@ func (h *TransactionsHandler) listTransactionRows() ([]models.Transaction, []Tra
 	})
 
 	return txs, rows, nil
-}
-
-func (h *TransactionsHandler) renderDashboardRoot(c *gin.Context, status int, issueForm IssueFormData, returnForm ReturnFormData, errMsg string, flash string, flashError string) {
-	lang := getLang(c)
-	tfunc := translator(lang)
-	data, renderErr := h.buildDashboardPageData(lang, issueForm, returnForm, errMsg, flash, flashError)
-	if renderErr != nil {
-		c.String(http.StatusInternalServerError, "failed to render dashboard")
-		return
-	}
-
-	page := PageData{
-		Lang:    lang,
-		T:       tfunc,
-		Success: flash,
-		Error:   errMsg,
-		Data:    data,
-	}
-	if page.Error == "" && flashError != "" {
-		page.Error = flashError
-	}
-
-	if c.GetHeader("HX-Request") != "" {
-		// When HTMX swaps, return only the dashboard-root fragment (forms + transaction history).
-		c.HTML(status, "dashboard_root.html", page)
-		return
-	}
-	c.HTML(status, "index.html", page)
 }
 
 func (h *TransactionsHandler) buildDashboardPageData(lang string, issueForm IssueFormData, returnForm ReturnFormData, errMsg string, flash string, flashError string) (DashboardPageData, error) {
@@ -341,5 +439,54 @@ func localizeIssueError(lang string, raw string) string {
 		return i18n.T(lang, "error_stock")
 	}
 	return raw
+}
+
+func (h *TransactionsHandler) resolveUserIDByName(name string) (string, error) {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return "", errors.New("issued to employee is required")
+	}
+	if id, ok := h.tryResolveUserIDByName(name); ok {
+		return id, nil
+	}
+
+	// If employee is not found, auto-register a basic employee profile so issuing can continue.
+	deptID, err := h.defaultDepartmentID()
+	if err != nil {
+		return "", err
+	}
+	u, addErr := h.usersSvc.AddUser(name, deptID, "employee")
+	if addErr != nil {
+		return "", addErr
+	}
+	return u.ID, nil
+}
+
+func (h *TransactionsHandler) tryResolveUserIDByName(name string) (string, bool) {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return "", false
+	}
+	users, err := h.usersSvc.List()
+	if err != nil {
+		return "", false
+	}
+	for _, u := range users {
+		if strings.EqualFold(strings.TrimSpace(u.Name), name) {
+			return u.ID, true
+		}
+	}
+	return "", false
+}
+
+func (h *TransactionsHandler) defaultDepartmentID() (string, error) {
+	depts, err := h.deptsSvc.List()
+	if err != nil {
+		return "", err
+	}
+	if len(depts) == 0 {
+		return "", errors.New("no departments configured")
+	}
+	return depts[0].ID, nil
 }
 

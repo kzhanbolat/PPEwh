@@ -1,60 +1,60 @@
 <!doctype html>
-<html lang="en">
+<html lang="{{.Lang}}">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{{call .T "transactions_title"}}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/styles.css" />
   </head>
-  <body class="bg-gray-50 text-gray-900">
-    <div class="max-w-5xl mx-auto px-4 py-6">
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-2xl font-bold">{{call .T "transactions_title"}}</h1>
-          <p class="text-sm text-gray-600">{{call .T "transactions_subtitle"}}</p>
-        </div>
-        <nav class="text-sm">
-          <a class="text-blue-600 hover:underline mr-3" href="/?lang={{.Lang}}">Dashboard</a>
-          <a class="text-blue-600 hover:underline mr-3" href="/items?lang={{.Lang}}">{{call .T "items"}}</a>
-          <a class="text-blue-600 hover:underline mr-3" href="/users?lang={{.Lang}}">{{call .T "users"}}</a>
-          <a class="text-blue-600 hover:underline" href="/transactions?lang=en">EN</a> |
-          <a class="text-blue-600 hover:underline" href="/transactions?lang=ru">RU</a>
-        </nav>
-      </div>
+  <body class="ppe-body">
+    <div class="ppe-device">
+      <div class="ppe-device-inner">
+        <header class="ppe-page-head">
+          <a class="ppe-back" href="/?lang={{.Lang}}" title="{{call .T "title"}}">←</a>
+          <h1 class="ppe-page-title">{{call .T "transactions_title"}}</h1>
+          <a class="ppe-head-action" href="/transactions/export?lang={{.Lang}}">{{call .T "download_excel"}}</a>
+          <p class="ppe-page-sub">{{call .T "transactions_subtitle"}}</p>
+        </header>
 
-      <form method="GET" action="/transactions" class="mt-6 mb-4 space-y-3">
-        <input type="hidden" name="lang" value="{{.Lang}}" />
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div>
-            <input type="text" name="user_name" placeholder="{{call .T "user_name"}}" class="w-full border rounded px-3 py-2" />
-          </div>
-          <div>
-            <input type="text" name="issued_by" placeholder="{{call .T "issued_by"}}" class="w-full border rounded px-3 py-2" />
-          </div>
-          <div>
-            <input type="text" name="item_name" placeholder="{{call .T "item_name"}}" class="w-full border rounded px-3 py-2" />
-          </div>
+        <div class="ppe-lang-row ppe-lang-row--tight">
+          <a href="/dashboard?lang={{.Lang}}">{{call .T "dashboard"}}</a>
+          <span class="text-slate-300">|</span>
+          <a href="/transactions?lang=en">EN</a>
+          <span class="text-slate-300">|</span>
+          <a href="/transactions?lang=ru">RU</a>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div>
-            <select name="type" class="w-full border rounded px-3 py-2">
+        <form method="GET" action="/transactions" class="ppe-filters">
+          <input type="hidden" name="lang" value="{{.Lang}}" />
+
+          <div class="ppe-section-bar ppe-section-bar--static">
+            <span class="ppe-section-bar-icon" aria-hidden="true"></span>
+            <span>{{call .T "filter"}}</span>
+          </div>
+
+          <div class="ppe-filter-row">
+            <input type="text" name="user_name" placeholder="{{call .T "user_name"}}" class="ppe-input" />
+            <input type="text" name="issued_by" placeholder="{{call .T "issued_by"}}" class="ppe-input" />
+            <input type="text" name="item_name" placeholder="{{call .T "item_name"}}" class="ppe-input" />
+          </div>
+
+          <div class="ppe-filter-row">
+            <select name="type" class="ppe-select">
               <option value="">{{call .T "all"}}</option>
               <option value="ISSUE">{{call .T "issue"}}</option>
               <option value="RETURN">{{call .T "return"}}</option>
             </select>
           </div>
-        </div>
-        <button type="submit" class="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700">
-          {{call .T "filter"}}
-        </button>
-      </form>
 
-      <div class="mt-6" id="transactions-table-wrap">
-        {{template "transactions_table.html" .}}
+          <button type="submit" class="ppe-btn-filter">{{call .T "filter"}}</button>
+        </form>
+
+        <div id="transactions-table-wrap">
+          {{template "transactions_table.html" .}}
+        </div>
       </div>
     </div>
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
   </body>
 </html>
-
