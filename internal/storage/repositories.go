@@ -34,3 +34,11 @@ type ReturnsRepository interface {
 	Add(ret models.Return) error
 }
 
+type AuthAccountsRepository interface {
+	List() ([]models.AuthAccount, error)
+	GetByID(id string) (models.AuthAccount, bool, error)
+	GetByEmail(email string) (models.AuthAccount, bool, error)
+	Add(account models.AuthAccount) error
+	Update(account models.AuthAccount) error
+}
+

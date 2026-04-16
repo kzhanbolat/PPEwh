@@ -22,7 +22,7 @@ type TransactionsHandler struct {
 	txSvc    *services.TransactionsService
 	usersSvc *services.UsersService
 	deptsSvc *services.DepartmentsService
-	// For MVP: request supplies issuer and receiver (no auth yet).
+	authSvc  *services.AuthService
 }
 
 func NewTransactionsHandler(
@@ -30,9 +30,10 @@ func NewTransactionsHandler(
 	txSvc *services.TransactionsService,
 	usersSvc *services.UsersService,
 	deptsSvc *services.DepartmentsService,
+	authSvc *services.AuthService,
 	_ any,
 ) *TransactionsHandler {
-	return &TransactionsHandler{itemsSvc: itemsSvc, txSvc: txSvc, usersSvc: usersSvc, deptsSvc: deptsSvc}
+	return &TransactionsHandler{itemsSvc: itemsSvc, txSvc: txSvc, usersSvc: usersSvc, deptsSvc: deptsSvc, authSvc: authSvc}
 }
 
 func (h *TransactionsHandler) History(c *gin.Context) {
@@ -138,11 +139,17 @@ func (h *TransactionsHandler) Export(c *gin.Context) {
 
 func (h *TransactionsHandler) IssuePage(c *gin.Context) {
 	issueForm := IssueFormData{Quantity: "1"}
+	if warehouseUserID, _, err := h.currentWarehouseActor(c); err == nil {
+		issueForm.IssuedByUserID = warehouseUserID
+	}
 	h.renderIssuePage(c, http.StatusOK, issueForm, "", "")
 }
 
 func (h *TransactionsHandler) ReturnPage(c *gin.Context) {
 	returnForm := ReturnFormData{QuantityReturned: "1"}
+	if warehouseUserID, _, err := h.currentWarehouseActor(c); err == nil {
+		returnForm.ReceivedByUserID = warehouseUserID
+	}
 	h.renderReturnPage(c, http.StatusOK, returnForm, "", "")
 }
 
@@ -168,9 +175,15 @@ func (h *TransactionsHandler) Issue(c *gin.Context) {
 		h.renderIssuePage(c, http.StatusBadRequest, issueForm, resolveErr.Error(), "")
 		return
 	}
+	warehouseUserID, _, actorErr := h.currentWarehouseActor(c)
+	if actorErr != nil {
+		h.renderIssuePage(c, http.StatusBadRequest, issueForm, actorErr.Error(), "")
+		return
+	}
+	issueForm.IssuedByUserID = warehouseUserID
 	issueForm.IssuedToUserID = issuedToUserID
 
-	_, err = h.txSvc.IssueItem(issueForm.ItemID, qty, issuedToUserID, issueForm.IssuedByUserID)
+	_, err = h.txSvc.IssueItem(issueForm.ItemID, qty, issuedToUserID, warehouseUserID)
 	if err != nil {
 		h.renderIssuePage(c, http.StatusBadRequest, issueForm, localizeIssueError(getLang(c), err.Error()), "")
 		return
@@ -234,6 +247,18 @@ func (h *TransactionsHandler) Return(c *gin.Context) {
 	if resolvedID, ok := h.tryResolveUserIDByName(returnedByUserName); ok {
 		returnedByUserID = resolvedID
 	}
+	warehouseUserID, _, actorErr := h.currentWarehouseActor(c)
+	if actorErr != nil {
+		returnForm := ReturnFormData{
+			TransactionID:      transactionID,
+			ReturnedByUserName: returnedByUserName,
+			QuantityReturned:   qtyStr,
+			ReceivedByUserID:   receivedByUserID,
+		}
+		h.renderReturnPage(c, http.StatusBadRequest, returnForm, actorErr.Error(), "")
+		return
+	}
+	receivedByUserID = warehouseUserID
 
 	_, err = h.txSvc.ReturnItem(transactionID, qty, returnedByUserID, receivedByUserID)
 	if err != nil {
@@ -254,8 +279,12 @@ func (h *TransactionsHandler) Return(c *gin.Context) {
 func (h *TransactionsHandler) renderIssuePage(c *gin.Context, status int, issueForm IssueFormData, errMsg string, success string) {
 	lang := getLang(c)
 	tfunc := translator(lang)
+	warehouseUserID, warehouseUserName, _ := h.currentWarehouseActor(c)
+	if issueForm.IssuedByUserID == "" {
+		issueForm.IssuedByUserID = warehouseUserID
+	}
 
-	data, renderErr := h.buildDashboardPageData(lang, issueForm, ReturnFormData{QuantityReturned: "1"}, errMsg, success, "")
+	data, renderErr := h.buildDashboardPageData(lang, issueForm, ReturnFormData{QuantityReturned: "1"}, errMsg, success, "", warehouseUserID, warehouseUserName)
 	if renderErr != nil {
 		c.String(http.StatusInternalServerError, "failed to render issue page")
 		return
@@ -273,8 +302,12 @@ func (h *TransactionsHandler) renderIssuePage(c *gin.Context, status int, issueF
 func (h *TransactionsHandler) renderReturnPage(c *gin.Context, status int, returnForm ReturnFormData, errMsg string, success string) {
 	lang := getLang(c)
 	tfunc := translator(lang)
+	warehouseUserID, warehouseUserName, _ := h.currentWarehouseActor(c)
+	if returnForm.ReceivedByUserID == "" {
+		returnForm.ReceivedByUserID = warehouseUserID
+	}
 
-	data, renderErr := h.buildDashboardPageData(lang, IssueFormData{Quantity: "1"}, returnForm, errMsg, success, "")
+	data, renderErr := h.buildDashboardPageData(lang, IssueFormData{Quantity: "1"}, returnForm, errMsg, success, "", warehouseUserID, warehouseUserName)
 	if renderErr != nil {
 		c.String(http.StatusInternalServerError, "failed to render return page")
 		return
@@ -383,7 +416,7 @@ func (h *TransactionsHandler) listTransactionRows() ([]models.Transaction, []Tra
 	return txs, rows, nil
 }
 
-func (h *TransactionsHandler) buildDashboardPageData(lang string, issueForm IssueFormData, returnForm ReturnFormData, errMsg string, flash string, flashError string) (DashboardPageData, error) {
+func (h *TransactionsHandler) buildDashboardPageData(lang string, issueForm IssueFormData, returnForm ReturnFormData, errMsg string, flash string, flashError string, warehouseUserID string, warehouseUserName string) (DashboardPageData, error) {
 	tfunc := translator(lang)
 	items, err := h.itemsSvc.List()
 	if err != nil {
@@ -406,6 +439,8 @@ func (h *TransactionsHandler) buildDashboardPageData(lang string, issueForm Issu
 		Items:               items,
 		IssuedToUsers:      filterUsers(users, false),
 		WarehouseStaff:     filterUsers(users, true),
+		CurrentWarehouseUserID:   warehouseUserID,
+		CurrentWarehouseUserName: warehouseUserName,
 		ReturnIssueOptions: returnOptions,
 		Error:               errMsg,
 		IssueForm:           issueForm,
@@ -488,5 +523,52 @@ func (h *TransactionsHandler) defaultDepartmentID() (string, error) {
 		return "", errors.New("no departments configured")
 	}
 	return depts[0].ID, nil
+}
+
+func (h *TransactionsHandler) currentWarehouseActor(c *gin.Context) (string, string, error) {
+	accountID, ok := currentAccountID(c)
+	if !ok {
+		return "", "", errors.New("auth account not found")
+	}
+	account, ok, err := h.authSvc.GetByID(accountID)
+	if err != nil {
+		return "", "", err
+	}
+	if !ok {
+		return "", "", errors.New("auth account not found")
+	}
+	userID, err := h.resolveOrCreateWarehouseUserByName(account.Name)
+	if err != nil {
+		return "", "", err
+	}
+	return userID, account.Name, nil
+}
+
+func (h *TransactionsHandler) resolveOrCreateWarehouseUserByName(name string) (string, error) {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return "", errors.New("warehouse user name is empty")
+	}
+	users, err := h.usersSvc.List()
+	if err != nil {
+		return "", err
+	}
+	for _, u := range users {
+		if strings.EqualFold(strings.TrimSpace(u.Name), name) {
+			if strings.EqualFold(strings.TrimSpace(u.Role), "warehouse") {
+				return u.ID, nil
+			}
+			return "", errors.New("current user is not warehouse staff")
+		}
+	}
+	deptID, err := h.defaultDepartmentID()
+	if err != nil {
+		return "", err
+	}
+	u, err := h.usersSvc.AddUser(name, deptID, "warehouse")
+	if err != nil {
+		return "", err
+	}
+	return u.ID, nil
 }
 

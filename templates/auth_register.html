@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="{{.Lang}}">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{call .T "register"}}</title>
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body class="ppe-body">
+    <div class="ppe-device">
+      <div class="ppe-device-inner">
+        <header class="ppe-home-header">
+          <h1 class="ppe-home-title">{{call .T "register"}}</h1>
+          <p class="ppe-home-sub">{{call .T "register_subtitle"}}</p>
+        </header>
+
+        <div class="ppe-lang-row ppe-lang-row--tight">
+          <a href="/register?lang=en">EN</a>
+          <span class="text-slate-300">|</span>
+          <a href="/register?lang=ru">RU</a>
+        </div>
+
+        {{if .Success}}
+          <div class="ppe-alert ppe-alert--success">{{.Success}}</div>
+        {{end}}
+        {{if .Error}}
+          <div class="ppe-alert ppe-alert--error">{{.Error}}</div>
+        {{end}}
+
+        <div class="ppe-panel">
+          <form method="POST" action="/register?lang={{.Lang}}" class="space-y-3">
+            <input type="hidden" name="lang" value="{{.Lang}}" />
+            <div class="ppe-field !mb-0">
+              <label for="name">{{call .T "name"}}</label>
+              <input id="name" type="text" name="name" value="{{.Name}}" class="ppe-input" required />
+            </div>
+            <div class="ppe-field !mb-0">
+              <label for="email">{{call .T "email"}}</label>
+              <input id="email" type="email" name="email" value="{{.Email}}" class="ppe-input" required />
+            </div>
+            <div class="ppe-field !mb-0">
+              <label for="password">{{call .T "password"}}</label>
+              <input id="password" type="password" name="password" class="ppe-input" required />
+            </div>
+            <label class="flex items-center gap-2 text-sm text-slate-700">
+              <input type="checkbox" name="is_warehouse_worker" {{if .IsWarehouseWorker}}checked{{end}} />
+              <span>{{call .T "warehouse_employee_confirm"}}</span>
+            </label>
+            <div class="ppe-form-actions !mt-0">
+              <button type="submit" class="ppe-btn-filter">{{call .T "register"}}</button>
+            </div>
+          </form>
+          <p class="mt-3 text-sm text-slate-600">
+            {{call .T "has_account"}}
+            <a class="text-blue-600 hover:underline" href="/login?lang={{.Lang}}">{{call .T "login"}}</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

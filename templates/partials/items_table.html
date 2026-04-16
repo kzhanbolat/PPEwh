@@ -6,41 +6,6 @@
     <div class="ppe-alert ppe-alert--success" role="status">{{.Success}}</div>
   {{end}}
 
-  <div class="ppe-table-card">
-    <h2 class="ppe-table-title">{{call .T "current_items"}}</h2>
-    <div class="ppe-table-scroll">
-      <table class="ppe-table">
-        <thead>
-          <tr>
-            <th>{{call .T "id"}}</th>
-            <th>{{call .T "name"}}</th>
-            <th>{{call .T "size"}}</th>
-            <th>{{call .T "quantity"}}</th>
-            <th>{{call .T "issue_date"}}</th>
-            <th>{{call .T "expiry_date"}}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {{range .Items}}
-            <tr>
-              <td class="ppe-mono"><span class="ppe-ellipsis-inline" title="{{.ID}}">{{.ID}}</span></td>
-              <td><span class="ppe-ellipsis-inline" title="{{.Name}}">{{.Name}}</span></td>
-              <td><span class="ppe-ellipsis-inline" title="{{.Size}}">{{.Size}}</span></td>
-              <td><strong>{{.Quantity}}</strong></td>
-              <td class="ppe-mono"><span class="ppe-ellipsis-inline" title="{{.IssueDate}}">{{.IssueDate}}</span></td>
-              <td class="ppe-mono"><span class="ppe-ellipsis-inline" title="{{.ExpiryDate}}">{{.ExpiryDate}}</span></td>
-            </tr>
-          {{end}}
-          {{if not .Items}}
-            <tr>
-              <td colspan="6" class="ppe-empty">{{call .T "no_items"}}</td>
-            </tr>
-          {{end}}
-        </tbody>
-      </table>
-    </div>
-  </div>
-
   <div class="ppe-panel">
     <button type="button" class="ppe-section-bar">
       <span class="ppe-section-bar-icon" aria-hidden="true"></span>
@@ -78,5 +43,40 @@
         <button class="ppe-btn-cta" type="submit">{{call .T "add_item"}}</button>
       </div>
     </form>
+  </div>
+
+  <div class="ppe-table-card">
+    <h2 class="ppe-table-title">{{call .T "current_items"}}</h2>
+    <div class="ppe-table-scroll">
+      <table class="ppe-table">
+        <thead>
+          <tr>
+            <th>{{call .T "id"}}</th>
+            <th>{{call .T "name"}}</th>
+            <th>{{call .T "size"}}</th>
+            <th>{{call .T "quantity"}}</th>
+            <th>{{call .T "issue_date"}}</th>
+            <th>{{call .T "expiry_date"}}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .Items}}
+            <tr>
+              <td class="ppe-mono"><span class="ppe-ellipsis-inline" title="{{.ID}}">{{.ID}}</span></td>
+              <td><span class="ppe-ellipsis-inline" title="{{.Name}}">{{.Name}}</span></td>
+              <td><span class="ppe-ellipsis-inline" title="{{.Size}}">{{.Size}}</span></td>
+              <td><strong>{{.Quantity}}</strong></td>
+              <td class="ppe-mono"><span class="ppe-ellipsis-inline" title="{{.IssueDate}}">{{.IssueDate}}</span></td>
+              <td class="ppe-mono"><span class="ppe-ellipsis-inline" title="{{.ExpiryDate}}">{{.ExpiryDate}}</span></td>
+            </tr>
+          {{end}}
+          {{if not .Items}}
+            <tr>
+              <td colspan="6" class="ppe-empty">{{call .T "no_items"}}</td>
+            </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>

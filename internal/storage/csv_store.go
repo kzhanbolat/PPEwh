@@ -17,6 +17,7 @@ type CSVStore struct {
 	departmentsRepo  *CSVDepartmentsRepository
 	transactionsRepo *CSVTransactionsRepository
 	returnsRepo      *CSVReturnsRepository
+	authRepo         *CSVAuthAccountsRepository
 }
 
 func NewCSVStore(dataDir string) (*CSVStore, error) {
@@ -29,6 +30,7 @@ func NewCSVStore(dataDir string) (*CSVStore, error) {
 	departmentsPath := filepath.Join(dataDir, "departments.csv")
 	transactionsPath := filepath.Join(dataDir, "transactions.csv")
 	returnsPath := filepath.Join(dataDir, "returns.csv")
+	accountsPath := filepath.Join(dataDir, "accounts.csv")
 
 	s := &CSVStore{}
 	s.itemsRepo = newCSVItemsRepository(itemsPath, &s.mu)
@@ -36,6 +38,7 @@ func NewCSVStore(dataDir string) (*CSVStore, error) {
 	s.departmentsRepo = newCSVDepartmentsRepository(departmentsPath, &s.mu)
 	s.transactionsRepo = newCSVTransactionsRepository(transactionsPath, &s.mu)
 	s.returnsRepo = newCSVReturnsRepository(returnsPath, &s.mu)
+	s.authRepo = newCSVAuthAccountsRepository(accountsPath, &s.mu)
 
 	// Preload headers + sample data if files don't exist.
 	if err := s.ensureFiles(); err != nil {
@@ -120,6 +123,13 @@ func (s *CSVStore) ensureFiles() error {
 		}
 	}
 
+	// Auth accounts
+	if _, err := os.Stat(s.authRepo.filePath); os.IsNotExist(err) {
+		if err := s.authRepo.writeAll([]models.AuthAccount{}); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -132,5 +142,9 @@ func (s *CSVStore) Transactions() *CSVTransactionsRepository {
 
 func (s *CSVStore) Returns() *CSVReturnsRepository {
 	return s.returnsRepo
+}
+
+func (s *CSVStore) AuthAccounts() *CSVAuthAccountsRepository {
+	return s.authRepo
 }
 

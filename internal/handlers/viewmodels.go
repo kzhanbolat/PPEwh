@@ -14,6 +14,7 @@ type UsersTableData struct {
 	Lang    string
 	T       func(string) string
 	Users    []models.User
+	IsAdmin bool
 	Success  string
 	Error    string
 }
@@ -56,5 +57,38 @@ type ReturnFormData struct {
 	ReturnedByUserName string
 	QuantityReturned string
 	ReceivedByUserID string
+}
+
+type AuthLoginPageData struct {
+	Lang    string
+	T       func(string) string
+	Email   string
+	Success string
+	Error   string
+}
+
+type AuthRegisterPageData struct {
+	Lang              string
+	T                 func(string) string
+	Name              string
+	Email             string
+	IsWarehouseWorker bool
+	Success           string
+	Error             string
+}
+
+type AuthChangePasswordPageData struct {
+	Lang    string
+	T       func(string) string
+	Success string
+	Error   string
+}
+
+type AdminAccessPageData struct {
+	Lang     string
+	T        func(string) string
+	Accounts []models.AuthAccount
+	Success  string
+	Error    string
 }
 

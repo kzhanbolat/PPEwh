@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="{{.Lang}}">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{call .T "admin_access"}}</title>
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body class="ppe-body">
+    <div class="ppe-device">
+      <div class="ppe-device-inner">
+        <header class="ppe-page-head">
+          <a class="ppe-back" href="/?lang={{.Lang}}" title="{{call .T "home"}}">←</a>
+          <h1 class="ppe-page-title">{{call .T "admin_access"}}</h1>
+          <form method="POST" action="/logout?lang={{.Lang}}">
+            <button type="submit" class="ppe-head-action">{{call .T "logout"}}</button>
+          </form>
+          <p class="ppe-page-sub">{{call .T "admin_access_subtitle"}}</p>
+        </header>
+
+        {{if .Success}}
+          <div class="ppe-alert ppe-alert--success">{{.Success}}</div>
+        {{end}}
+        {{if .Error}}
+          <div class="ppe-alert ppe-alert--error">{{.Error}}</div>
+        {{end}}
+
+        <div class="space-y-3">
+          {{range .Accounts}}
+            <div class="ppe-panel ppe-admin-row">
+              <div class="ppe-admin-meta">
+                <div class="font-semibold ppe-ellipsis" title="{{.Name}}">{{.Name}}</div>
+                <div class="text-sm text-slate-600 ppe-ellipsis" title="{{.Email}}">{{.Email}}</div>
+                <div class="text-xs text-slate-500 mt-1">
+                  {{if .IsAdmin}}ADMIN{{else}}{{if .IsApproved}}APPROVED{{else}}PENDING{{end}}{{end}}
+                </div>
+              </div>
+
+              {{if not .IsAdmin}}
+                <div class="ppe-admin-actions">
+                  <form method="POST" action="/admin/access/approval?lang={{$.Lang}}" class="ppe-admin-approval-form">
+                    <input type="hidden" name="account_id" value="{{.ID}}" />
+                    <label class="text-sm text-slate-700 flex items-center gap-2">
+                      <input type="checkbox" name="approved" {{if .IsApproved}}checked{{end}} />
+                      <span>{{call $.T "grant_access"}}</span>
+                    </label>
+                    <button type="submit" class="ppe-btn-filter">{{call $.T "save"}}</button>
+                  </form>
+
+                  <form method="POST" action="/admin/access/reset-password?lang={{$.Lang}}" class="ppe-admin-reset-form">
+                    <input type="hidden" name="account_id" value="{{.ID}}" />
+                    <input type="password" name="new_password" class="ppe-input" placeholder="{{call $.T "new_password"}}" required />
+                    <button type="submit" class="ppe-btn-filter">{{call $.T "reset_password"}}</button>
+                  </form>
+                </div>
+              {{end}}
+            </div>
+          {{end}}
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

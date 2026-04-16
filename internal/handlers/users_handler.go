@@ -21,12 +21,18 @@ func NewUsersHandler(usersSvc *services.UsersService, _ any) *UsersHandler {
 func (h *UsersHandler) ListPage(c *gin.Context) {
 	lang := getLang(c)
 	t := translator(lang)
+	isAdmin := false
+	if v, ok := c.Get("auth_is_admin"); ok {
+		if b, ok := v.(bool); ok {
+			isAdmin = b
+		}
+	}
 	users, err := h.usersSvc.List()
 	if err != nil {
-		c.HTML(http.StatusInternalServerError, "employees.html", UsersTableData{Lang: lang, T: t, Error: "failed to load users"})
+		c.HTML(http.StatusInternalServerError, "employees.html", UsersTableData{Lang: lang, T: t, IsAdmin: isAdmin, Error: "failed to load users"})
 		return
 	}
-	c.HTML(http.StatusOK, "employees.html", UsersTableData{Lang: lang, T: t, Users: users})
+	c.HTML(http.StatusOK, "employees.html", UsersTableData{Lang: lang, T: t, IsAdmin: isAdmin, Users: users})
 }
 
 func (h *UsersHandler) Add(c *gin.Context) {
@@ -39,16 +45,16 @@ func (h *UsersHandler) Add(c *gin.Context) {
 	_, err := h.usersSvc.AddUser(name, departmentID, role)
 	users, listErr := h.usersSvc.List()
 	if listErr != nil {
-		c.HTML(http.StatusInternalServerError, "users_table.html", UsersTableData{Lang: lang, T: t, Users: users, Error: "failed to reload users"})
+		c.HTML(http.StatusInternalServerError, "users_table.html", UsersTableData{Lang: lang, T: t, IsAdmin: true, Users: users, Error: "failed to reload users"})
 		return
 	}
 
 	if err != nil {
-		c.HTML(http.StatusBadRequest, "users_table.html", UsersTableData{Lang: lang, T: t, Users: users, Error: err.Error()})
+		c.HTML(http.StatusBadRequest, "users_table.html", UsersTableData{Lang: lang, T: t, IsAdmin: true, Users: users, Error: err.Error()})
 		return
 	}
 
-	c.HTML(http.StatusOK, "users_table.html", UsersTableData{Lang: lang, T: t, Users: users, Success: t("user_added_success")})
+	c.HTML(http.StatusOK, "users_table.html", UsersTableData{Lang: lang, T: t, IsAdmin: true, Users: users, Success: t("user_added_success")})
 }
 
 func (h *UsersHandler) Export(c *gin.Context) {

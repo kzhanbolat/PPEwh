@@ -39,37 +39,39 @@
     </div>
   </div>
 
-  <div class="ppe-panel">
-    <button type="button" class="ppe-section-bar">
-      <span class="ppe-section-bar-icon" aria-hidden="true"></span>
-      <span>{{call .T "add_user"}}</span>
-    </button>
-    <form
-      class="space-y-3 mt-2"
-      hx-post="/employees?lang={{.Lang}}"
-      hx-target="#users-table-wrap"
-      hx-swap="outerHTML"
-      method="post"
-    >
-      <input type="hidden" name="lang" value="{{.Lang}}" />
-      <div class="ppe-field">
-        <label for="add-user-name">{{call .T "name"}}</label>
-        <input id="add-user-name" name="name" class="ppe-input" required />
-      </div>
-      <div class="ppe-field">
-        <label for="add-user-dept">{{call .T "department_id"}}</label>
-        <input id="add-user-dept" name="department_id" class="ppe-input" required />
-      </div>
-      <div class="ppe-field">
-        <label for="add-user-role">{{call .T "role"}}</label>
-        <select id="add-user-role" name="role" class="ppe-select" required>
-          <option value="employee">{{call .T "role_employee"}}</option>
-          <option value="warehouse">{{call .T "role_warehouse"}}</option>
-        </select>
-      </div>
-      <div class="ppe-form-actions">
-        <button class="ppe-btn-cta" type="submit">{{call .T "add_user"}}</button>
-      </div>
-    </form>
-  </div>
+  {{if .IsAdmin}}
+    <div class="ppe-panel">
+      <button type="button" class="ppe-section-bar">
+        <span class="ppe-section-bar-icon" aria-hidden="true"></span>
+        <span>{{call .T "add_user"}}</span>
+      </button>
+      <form
+        class="space-y-3 mt-2"
+        hx-post="/employees?lang={{.Lang}}"
+        hx-target="#users-table-wrap"
+        hx-swap="outerHTML"
+        method="post"
+      >
+        <input type="hidden" name="lang" value="{{.Lang}}" />
+        <div class="ppe-field">
+          <label for="add-user-name">{{call .T "name"}}</label>
+          <input id="add-user-name" name="name" class="ppe-input" required />
+        </div>
+        <div class="ppe-field">
+          <label for="add-user-dept">{{call .T "department_id"}}</label>
+          <input id="add-user-dept" name="department_id" class="ppe-input" required />
+        </div>
+        <div class="ppe-field">
+          <label for="add-user-role">{{call .T "role"}}</label>
+          <select id="add-user-role" name="role" class="ppe-select" required>
+            <option value="employee">{{call .T "role_employee"}}</option>
+            <option value="warehouse">{{call .T "role_warehouse"}}</option>
+          </select>
+        </div>
+        <div class="ppe-form-actions">
+          <button class="ppe-btn-cta" type="submit">{{call .T "add_user"}}</button>
+        </div>
+      </form>
+    </div>
+  {{end}}
 </div>

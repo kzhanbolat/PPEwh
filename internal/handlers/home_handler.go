@@ -16,6 +16,8 @@ type DashboardPageData struct {
 	Items []models.Item
 	IssuedToUsers []models.User
 	WarehouseStaff []models.User
+	CurrentWarehouseUserID string
+	CurrentWarehouseUserName string
 	ReturnIssueOptions []ReturnIssueOption
 	Error string
 	IssueForm IssueFormData

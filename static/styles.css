@@ -538,6 +538,51 @@ body.ppe-body {
   margin: 0.35rem 0 0;
 }
 
+/* Admin access page responsive rows */
+.ppe-admin-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.ppe-admin-meta {
+  min-width: 0;
+}
+
+.ppe-admin-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.ppe-admin-approval-form {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.ppe-admin-reset-form {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.ppe-admin-reset-form .ppe-input {
+  min-width: 0;
+}
+
+@media (max-width: 1023px) {
+  .ppe-admin-reset-form {
+    flex-wrap: wrap;
+  }
+
+  .ppe-admin-reset-form .ppe-input {
+    flex: 1 1 100%;
+  }
+}
+
 /* Ellipsis helpers for long UI text */
 .ppe-ellipsis {
   display: block;
@@ -654,6 +699,41 @@ body.ppe-body {
     font-size: 1.05rem;
     padding-top: 0.8rem;
     padding-bottom: 0.8rem;
+  }
+
+  .ppe-admin-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .ppe-admin-meta {
+    flex: 0 0 28%;
+    max-width: 28%;
+  }
+
+  .ppe-admin-actions {
+    flex: 1 1 auto;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    min-width: 0;
+  }
+
+  .ppe-admin-approval-form {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+  }
+
+  .ppe-admin-reset-form {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .ppe-admin-reset-form .ppe-input {
+    flex: 1 1 auto;
   }
 
   /* Reduce truncation on desktop where there is available width */

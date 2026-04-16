@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"strings"
+	"time"
 
 	"ppewh/internal/models"
 	"ppewh/internal/storage"
@@ -33,6 +34,19 @@ func (s *ItemsService) AddItem(name, size string, quantity int, issueDate, expir
 	}
 	if quantity <= 0 {
 		return models.Item{}, errors.New("quantity must be > 0")
+	}
+	if issueDate != "" && expiryDate != "" {
+		issueAt, err := time.Parse("2006-01-02", issueDate)
+		if err != nil {
+			return models.Item{}, errors.New("issue date must be in YYYY-MM-DD format")
+		}
+		expiryAt, err := time.Parse("2006-01-02", expiryDate)
+		if err != nil {
+			return models.Item{}, errors.New("expiry date must be in YYYY-MM-DD format")
+		}
+		if !issueAt.Before(expiryAt) {
+			return models.Item{}, errors.New("issue date must be earlier than expiry date")
+		}
 	}
 
 	item := models.Item{

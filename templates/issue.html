@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{{call .T "issue_item"}}</title>
+    <link rel="icon" type="image/png" href="/logo.png" />
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
@@ -69,12 +70,8 @@
                 <span class="ppe-section-bar-icon" aria-hidden="true"></span>
                 <span>{{call .T "issued_by_warehouse"}}</span>
               </button>
-              <select name="issued_by_user_id" class="ppe-select" required>
-                <option value="">{{call .T "select_warehouse_staff"}}</option>
-                {{range .Data.WarehouseStaff}}
-                  <option value="{{.ID}}" title="{{.Name}}" {{if eq .ID $.Data.IssueForm.IssuedByUserID}}selected{{end}}>{{.Name}}</option>
-                {{end}}
-              </select>
+              <input type="hidden" name="issued_by_user_id" value="{{.Data.CurrentWarehouseUserID}}" />
+              <input type="text" class="ppe-input" value="{{.Data.CurrentWarehouseUserName}}" readonly />
             </div>
 
             <div class="ppe-field">
