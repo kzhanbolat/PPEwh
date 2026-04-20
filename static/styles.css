@@ -147,6 +147,10 @@ body.ppe-body {
   margin-bottom: 0.25rem;
 }
 
+.ppe-page-head--action {
+  grid-template-columns: 2.25rem 1fr auto;
+}
+
 .ppe-back {
   display: inline-flex;
   align-items: center;
@@ -428,7 +432,16 @@ body.ppe-body {
 
 .ppe-table-scroll {
   overflow-x: auto;
+  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  max-height: 62vh;
+  border-radius: 0 0 var(--ppe-radius) var(--ppe-radius);
+}
+
+.ppe-table-scroll .ppe-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .ppe-table {
@@ -573,6 +586,20 @@ body.ppe-body {
   min-width: 0;
 }
 
+.ppe-admin-actions .ppe-btn-filter {
+  min-width: 7.5rem;
+  height: 2.9rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.ppe-admin-reset-form .ppe-btn-filter {
+  min-width: 10.5rem;
+}
+
 @media (max-width: 1023px) {
   .ppe-admin-reset-form {
     flex-wrap: wrap;
@@ -580,6 +607,10 @@ body.ppe-body {
 
   .ppe-admin-reset-form .ppe-input {
     flex: 1 1 100%;
+  }
+
+  .ppe-admin-actions .ppe-btn-filter {
+    width: 100%;
   }
 }
 
@@ -685,6 +716,10 @@ body.ppe-body {
     font-size: 0.95rem;
   }
 
+  .ppe-table-scroll {
+    max-height: 58vh;
+  }
+
   .ppe-table thead th,
   .ppe-table tbody td {
     padding-top: 0.68rem;
@@ -776,5 +811,9 @@ body.ppe-body {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.8rem 0.9rem;
+  }
+
+  .ppe-table-scroll {
+    max-height: 56vh;
   }
 }
