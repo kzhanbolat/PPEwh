@@ -81,18 +81,30 @@ func (r *CSVUsersRepository) readAll() ([]models.User, error) {
 		return []models.User{}, nil
 	}
 
-	// Header: id,name,department_id,role
+	// Header: id,employee_id,name,department_id,role
 	out := make([]models.User, 0, len(records)-1)
 	for idx := 1; idx < len(records); idx++ {
 		rec := records[idx]
 		if len(rec) < 4 {
 			continue
 		}
+		employeeID := ""
+		name := rec[1]
+		departmentID := rec[2]
+		role := rec[3]
+		// Backward compatibility with old csv format: id,name,department_id,role
+		if len(rec) >= 5 {
+			employeeID = rec[1]
+			name = rec[2]
+			departmentID = rec[3]
+			role = rec[4]
+		}
 		out = append(out, models.User{
 			ID:           rec[0],
-			Name:         rec[1],
-			DepartmentID: rec[2],
-			Role:         rec[3],
+			EmployeeID:   employeeID,
+			Name:         name,
+			DepartmentID: departmentID,
+			Role:         role,
 		})
 	}
 	return out, nil
@@ -108,11 +120,11 @@ func (r *CSVUsersRepository) writeAll(users []models.User) error {
 	w := csv.NewWriter(f)
 	defer w.Flush()
 
-	if err := w.Write([]string{"id", "name", "department_id", "role"}); err != nil {
+	if err := w.Write([]string{"id", "employee_id", "name", "department_id", "role"}); err != nil {
 		return err
 	}
 	for _, u := range users {
-		if err := w.Write([]string{u.ID, u.Name, u.DepartmentID, u.Role}); err != nil {
+		if err := w.Write([]string{u.ID, u.EmployeeID, u.Name, u.DepartmentID, u.Role}); err != nil {
 			return err
 		}
 	}

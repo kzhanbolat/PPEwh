@@ -64,9 +64,9 @@ func (s *CSVStore) ensureFiles() error {
 	// Users
 	if _, err := os.Stat(s.usersRepo.filePath); os.IsNotExist(err) {
 		sample := []models.User{
-			{ID: "USR-001", Name: "Alice", DepartmentID: "DEPT-001", Role: "warehouse"},
-			{ID: "USR-002", Name: "Bob", DepartmentID: "DEPT-002", Role: "employee"},
-			{ID: "USR-003", Name: "Charlie", DepartmentID: "DEPT-003", Role: "employee"},
+			{ID: "USR-001", EmployeeID: "EMP-001", Name: "Alice", DepartmentID: "DEPT-001", Role: "warehouse"},
+			{ID: "USR-002", EmployeeID: "EMP-002", Name: "Bob", DepartmentID: "DEPT-002", Role: "employee"},
+			{ID: "USR-003", EmployeeID: "EMP-003", Name: "Charlie", DepartmentID: "DEPT-003", Role: "employee"},
 		}
 		if err := s.usersRepo.writeAll(sample); err != nil {
 			return err

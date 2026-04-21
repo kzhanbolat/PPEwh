@@ -37,7 +37,9 @@
   "current_items": "Текущие товары",
   "add_item": "Добавить товар",
   "name": "Название",
+  "full_name": "ФИО",
   "id": "ID",
+  "employee_id": "Табельный номер",
   "size": "Размер",
   "issue_date": "Дата выдачи",
   "expiry_date": "Срок годности",
@@ -117,5 +119,20 @@
   "access_forbidden": "У вас нет прав для открытия этой страницы.",
   "not_found": "Страница не найдена",
   "page_not_found": "Запрошенная страница не существует.",
-  "back_home": "На главную"
+  "back_home": "На главную",
+  "employee_not_in_list_hint": "Этого человека нет в списке сотрудников. Администратор должен сначала добавить его на странице «Сотрудники» (точное имя, как в списке).",
+  "employee_name_roster_hint": "Укажите имя сотрудника точно так же, как на странице «Сотрудники».",
+  "issued_to_required": "Укажите, кому выдано (сотрудник).",
+  "returned_by_required": "Укажите, кто возвращает (сотрудник)."
+  ,"upload_employees_excel": "Загрузка сотрудников из Excel"
+  ,"select_excel_file": "Выберите Excel файл (.xlsx)"
+  ,"upload": "Загрузить"
+  ,"employees_upload_success": "Сотрудники успешно загружены"
+  ,"employees_upload_file_required": "Выберите Excel файл для загрузки."
+  ,"employees_upload_read_failed": "Не удалось прочитать загруженный файл."
+  ,"employees_upload_invalid_excel": "Некорректный Excel файл. Загрузите файл .xlsx."
+  ,"employees_upload_empty_sheet": "Загруженный Excel файл пуст."
+  ,"employees_upload_missing_columns": "Excel должен содержать обязательные колонки: employee_id, full_name (или name), department_id, role."
+  ,"employees_upload_required_cells": "Обязательные колонки должны быть заполнены (employee_id, full_name/name, department_id, role)."
+  ,"row": "Строка"
 }

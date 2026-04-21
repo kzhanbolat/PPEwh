@@ -20,11 +20,15 @@ func (s *UsersService) List() ([]models.User, error) {
 	return s.repo.List()
 }
 
-func (s *UsersService) AddUser(name, departmentID, role string) (models.User, error) {
+func (s *UsersService) AddUser(employeeID, name, departmentID, role string) (models.User, error) {
+	employeeID = strings.TrimSpace(employeeID)
 	name = strings.TrimSpace(name)
 	departmentID = strings.TrimSpace(departmentID)
 	role = strings.TrimSpace(strings.ToLower(role))
 
+	if employeeID == "" {
+		return models.User{}, errors.New("employee_id is required")
+	}
 	if name == "" {
 		return models.User{}, errors.New("user name is required")
 	}
@@ -40,6 +44,7 @@ func (s *UsersService) AddUser(name, departmentID, role string) (models.User, er
 
 	user := models.User{
 		ID:           NewID("USR"),
+		EmployeeID:   employeeID,
 		Name:         name,
 		DepartmentID: departmentID,
 		Role:         role,

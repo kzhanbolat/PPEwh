@@ -114,7 +114,9 @@ func Run() {
 	protectedAdminEmployees := protected.Group("/")
 	protectedAdminEmployees.Use(handlers.RequireAdmin())
 	protectedAdminEmployees.POST("/employees", usersHandler.Add)
+	protectedAdminEmployees.POST("/employees/upload", usersHandler.UploadExcel)
 	protectedAdminEmployees.POST("/users", usersHandler.Add)
+	protectedAdminEmployees.POST("/users/upload", usersHandler.UploadExcel)
 
 	// Transactions
 	txHandler := handlers.NewTransactionsHandler(itemsSvc, txSvc, usersSvc, deptsSvc, authSvc, templates)

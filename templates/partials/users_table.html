@@ -13,7 +13,8 @@
         <thead>
           <tr>
             <th>{{call .T "id"}}</th>
-            <th>{{call .T "name"}}</th>
+            <th>{{call .T "employee_id"}}</th>
+            <th>{{call .T "full_name"}}</th>
             <th>{{call .T "department_id"}}</th>
             <th>{{call .T "role"}}</th>
           </tr>
@@ -22,6 +23,7 @@
           {{range .Users}}
             <tr>
               <td class="ppe-mono"><span class="ppe-ellipsis-inline" title="{{.ID}}">{{.ID}}</span></td>
+              <td class="ppe-mono"><span class="ppe-ellipsis-inline" title="{{.EmployeeID}}">{{.EmployeeID}}</span></td>
               <td><span class="ppe-ellipsis-inline" title="{{.Name}}">{{.Name}}</span></td>
               <td><span class="ppe-ellipsis-inline" title="{{.DepartmentID}}">{{.DepartmentID}}</span></td>
               <td>
@@ -31,7 +33,7 @@
           {{end}}
           {{if not .Users}}
             <tr>
-              <td colspan="4" class="ppe-empty">{{call .T "no_users"}}</td>
+              <td colspan="5" class="ppe-empty">{{call .T "no_users"}}</td>
             </tr>
           {{end}}
         </tbody>
@@ -40,6 +42,28 @@
   </div>
 
   {{if .IsAdmin}}
+    <div class="ppe-panel">
+      <button type="button" class="ppe-section-bar">
+        <span class="ppe-section-bar-icon" aria-hidden="true"></span>
+        <span>{{call .T "upload_employees_excel"}}</span>
+      </button>
+      <form
+        class="space-y-3 mt-2"
+        action="/employees/upload?lang={{.Lang}}"
+        enctype="multipart/form-data"
+        method="post"
+      >
+        <input type="hidden" name="lang" value="{{.Lang}}" />
+        <div class="ppe-field">
+          <label for="employees-file">{{call .T "select_excel_file"}}</label>
+          <input id="employees-file" type="file" name="employees_file" class="ppe-input" accept=".xlsx" required />
+        </div>
+        <div class="ppe-form-actions">
+          <button class="ppe-btn-filter" type="submit">{{call .T "upload"}}</button>
+        </div>
+      </form>
+    </div>
+
     <div class="ppe-panel">
       <button type="button" class="ppe-section-bar">
         <span class="ppe-section-bar-icon" aria-hidden="true"></span>
@@ -54,7 +78,11 @@
       >
         <input type="hidden" name="lang" value="{{.Lang}}" />
         <div class="ppe-field">
-          <label for="add-user-name">{{call .T "name"}}</label>
+          <label for="add-user-employee-id">{{call .T "employee_id"}}</label>
+          <input id="add-user-employee-id" name="employee_id" class="ppe-input" required />
+        </div>
+        <div class="ppe-field">
+          <label for="add-user-name">{{call .T "full_name"}}</label>
           <input id="add-user-name" name="name" class="ppe-input" required />
         </div>
         <div class="ppe-field">

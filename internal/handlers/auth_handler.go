@@ -249,7 +249,7 @@ func (h *AuthHandler) ensureApprovedAccountInEmployees(accountID string) error {
 	if err != nil {
 		return err
 	}
-	_, err = h.usersSvc.AddUser(account.Name, deptID, "warehouse")
+	_, err = h.usersSvc.AddUser(account.ID, account.Name, deptID, "warehouse")
 	return err
 }
 

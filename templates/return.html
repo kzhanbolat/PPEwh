@@ -61,13 +61,22 @@
                 <span>{{call .T "issued_to_employee"}}</span>
               </button>
               <input
+                id="returned-by-name"
                 name="returned_by_user_name"
                 type="text"
                 class="ppe-input"
+                list="return-employee-name-options"
+                autocomplete="off"
                 placeholder="{{call .T "user_name"}}"
                 value="{{.Data.ReturnForm.ReturnedByUserName}}"
                 required
               />
+              <datalist id="return-employee-name-options">
+                {{range .Data.IssuedToUsers}}
+                  <option value="{{.Name}}"></option>
+                {{end}}
+              </datalist>
+              <p class="ppe-muted-note">{{call .T "employee_name_roster_hint"}}</p>
             </div>
 
             <div class="ppe-field">

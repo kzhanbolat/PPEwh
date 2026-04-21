@@ -1,12 +1,11 @@
 package handlers
 
 import (
-	"bytes"
-	"encoding/csv"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/xuri/excelize/v2"
 
 	"ppewh/internal/services"
 )
@@ -76,26 +75,30 @@ func (h *ItemsHandler) Export(c *gin.Context) {
 		return
 	}
 
-	var buf bytes.Buffer
-	w := csv.NewWriter(&buf)
-	_ = w.Write([]string{"id", "name", "size", "quantity", "issue_date", "expiry_date"})
-	for _, it := range items {
-		_ = w.Write([]string{
-			it.ID,
-			it.Name,
-			it.Size,
-			strconv.Itoa(it.Quantity),
-			it.IssueDate,
-			it.ExpiryDate,
-		})
+	f := excelize.NewFile()
+	defer func() { _ = f.Close() }()
+	sheet := f.GetSheetName(0)
+	headers := []string{"id", "name", "size", "quantity", "issue_date", "expiry_date"}
+	for i, h := range headers {
+		cell, _ := excelize.CoordinatesToCellName(i+1, 1)
+		_ = f.SetCellValue(sheet, cell, h)
 	}
-	w.Flush()
-	if err := w.Error(); err != nil {
+	for i, it := range items {
+		row := i + 2
+		_ = f.SetCellValue(sheet, "A"+strconv.Itoa(row), it.ID)
+		_ = f.SetCellValue(sheet, "B"+strconv.Itoa(row), it.Name)
+		_ = f.SetCellValue(sheet, "C"+strconv.Itoa(row), it.Size)
+		_ = f.SetCellValue(sheet, "D"+strconv.Itoa(row), it.Quantity)
+		_ = f.SetCellValue(sheet, "E"+strconv.Itoa(row), it.IssueDate)
+		_ = f.SetCellValue(sheet, "F"+strconv.Itoa(row), it.ExpiryDate)
+	}
+	buf, err := f.WriteToBuffer()
+	if err != nil {
 		c.String(http.StatusInternalServerError, "failed to build export")
 		return
 	}
 
-	c.Header("Content-Disposition", `attachment; filename="items_export.csv"`)
-	c.Data(http.StatusOK, "text/csv; charset=utf-8", buf.Bytes())
+	c.Header("Content-Disposition", `attachment; filename="items_export.xlsx"`)
+	c.Data(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buf.Bytes())
 }
 

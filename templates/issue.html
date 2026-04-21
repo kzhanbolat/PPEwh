@@ -56,13 +56,22 @@
                 <span>{{call .T "issued_to_employee"}}</span>
               </button>
               <input
+                id="issued-to-name"
                 name="issued_to_user_name"
                 type="text"
                 class="ppe-input"
+                list="employee-name-options"
+                autocomplete="off"
                 placeholder="{{call .T "user_name"}}"
                 value="{{.Data.IssueForm.IssuedToUserName}}"
                 required
               />
+              <datalist id="employee-name-options">
+                {{range .Data.IssuedToUsers}}
+                  <option value="{{.Name}}"></option>
+                {{end}}
+              </datalist>
+              <p class="ppe-muted-note">{{call .T "employee_name_roster_hint"}}</p>
             </div>
 
             <div class="ppe-field">

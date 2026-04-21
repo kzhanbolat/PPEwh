@@ -1,16 +1,16 @@
 package handlers
 
 import (
-	"bytes"
-	"encoding/csv"
 	"errors"
 	"net/http"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/xuri/excelize/v2"
 
 	"ppewh/internal/models"
 	"ppewh/internal/i18n"
@@ -113,28 +113,32 @@ func (h *TransactionsHandler) Export(c *gin.Context) {
 		filtered = append(filtered, t)
 	}
 
-	var buf bytes.Buffer
-	w := csv.NewWriter(&buf)
-	_ = w.Write([]string{"timestamp", "type", "issued_to", "issued_by", "department", "item", "quantity"})
-	for _, row := range filtered {
-		_ = w.Write([]string{
-			row.Timestamp,
-			row.EventType,
-			row.IssuedToUserName,
-			row.IssuedByUserName,
-			row.DepartmentName,
-			row.ItemName,
-			strconv.Itoa(row.Quantity),
-		})
+	f := excelize.NewFile()
+	defer func() { _ = f.Close() }()
+	sheet := f.GetSheetName(0)
+	headers := []string{"timestamp", "type", "issued_to", "issued_by", "department", "item", "quantity"}
+	for i, h := range headers {
+		cell, _ := excelize.CoordinatesToCellName(i+1, 1)
+		_ = f.SetCellValue(sheet, cell, h)
 	}
-	w.Flush()
-	if err := w.Error(); err != nil {
+	for i, row := range filtered {
+		r := i + 2
+		_ = f.SetCellValue(sheet, "A"+strconv.Itoa(r), row.Timestamp)
+		_ = f.SetCellValue(sheet, "B"+strconv.Itoa(r), row.EventType)
+		_ = f.SetCellValue(sheet, "C"+strconv.Itoa(r), row.IssuedToUserName)
+		_ = f.SetCellValue(sheet, "D"+strconv.Itoa(r), row.IssuedByUserName)
+		_ = f.SetCellValue(sheet, "E"+strconv.Itoa(r), row.DepartmentName)
+		_ = f.SetCellValue(sheet, "F"+strconv.Itoa(r), row.ItemName)
+		_ = f.SetCellValue(sheet, "G"+strconv.Itoa(r), row.Quantity)
+	}
+	buf, err := f.WriteToBuffer()
+	if err != nil {
 		c.String(http.StatusInternalServerError, "failed to build export")
 		return
 	}
 
-	c.Header("Content-Disposition", `attachment; filename="transactions_export.csv"`)
-	c.Data(http.StatusOK, "text/csv; charset=utf-8", buf.Bytes())
+	c.Header("Content-Disposition", `attachment; filename="transactions_export.xlsx"`)
+	c.Data(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buf.Bytes())
 }
 
 func (h *TransactionsHandler) IssuePage(c *gin.Context) {
@@ -170,9 +174,15 @@ func (h *TransactionsHandler) Issue(c *gin.Context) {
 		return
 	}
 
-	issuedToUserID, resolveErr := h.resolveUserIDByName(issueForm.IssuedToUserName)
-	if resolveErr != nil {
-		h.renderIssuePage(c, http.StatusBadRequest, issueForm, resolveErr.Error(), "")
+	lang := getLang(c)
+	t := translator(lang)
+	if strings.TrimSpace(issueForm.IssuedToUserName) == "" {
+		h.renderIssuePage(c, http.StatusBadRequest, issueForm, t("issued_to_required"), "")
+		return
+	}
+	issuedToUserID, ok := h.tryResolveUserIDByName(issueForm.IssuedToUserName)
+	if !ok {
+		h.renderIssuePage(c, http.StatusBadRequest, issueForm, t("employee_not_in_list_hint"), "")
 		return
 	}
 	warehouseUserID, _, actorErr := h.currentWarehouseActor(c)
@@ -233,19 +243,28 @@ func (h *TransactionsHandler) Return(c *gin.Context) {
 		return
 	}
 
-	returnedByUserID := strings.TrimSpace(returnedByUserName)
-	if returnedByUserID == "" {
+	lang := getLang(c)
+	t := translator(lang)
+	if strings.TrimSpace(returnedByUserName) == "" {
 		returnForm := ReturnFormData{
 			TransactionID:      transactionID,
 			ReturnedByUserName: returnedByUserName,
 			QuantityReturned:   qtyStr,
 			ReceivedByUserID:   receivedByUserID,
 		}
-		h.renderReturnPage(c, http.StatusBadRequest, returnForm, "returned by is required", "")
+		h.renderReturnPage(c, http.StatusBadRequest, returnForm, t("returned_by_required"), "")
 		return
 	}
-	if resolvedID, ok := h.tryResolveUserIDByName(returnedByUserName); ok {
-		returnedByUserID = resolvedID
+	returnedByUserID, ok := h.tryResolveUserIDByName(returnedByUserName)
+	if !ok {
+		returnForm := ReturnFormData{
+			TransactionID:      transactionID,
+			ReturnedByUserName: returnedByUserName,
+			QuantityReturned:   qtyStr,
+			ReceivedByUserID:   receivedByUserID,
+		}
+		h.renderReturnPage(c, http.StatusBadRequest, returnForm, t("employee_not_in_list_hint"), "")
+		return
 	}
 	warehouseUserID, _, actorErr := h.currentWarehouseActor(c)
 	if actorErr != nil {
@@ -476,27 +495,6 @@ func localizeIssueError(lang string, raw string) string {
 	return raw
 }
 
-func (h *TransactionsHandler) resolveUserIDByName(name string) (string, error) {
-	name = strings.TrimSpace(name)
-	if name == "" {
-		return "", errors.New("issued to employee is required")
-	}
-	if id, ok := h.tryResolveUserIDByName(name); ok {
-		return id, nil
-	}
-
-	// If employee is not found, auto-register a basic employee profile so issuing can continue.
-	deptID, err := h.defaultDepartmentID()
-	if err != nil {
-		return "", err
-	}
-	u, addErr := h.usersSvc.AddUser(name, deptID, "employee")
-	if addErr != nil {
-		return "", addErr
-	}
-	return u.ID, nil
-}
-
 func (h *TransactionsHandler) tryResolveUserIDByName(name string) (string, bool) {
 	name = strings.TrimSpace(name)
 	if name == "" {
@@ -565,7 +563,8 @@ func (h *TransactionsHandler) resolveOrCreateWarehouseUserByName(name string) (s
 	if err != nil {
 		return "", err
 	}
-	u, err := h.usersSvc.AddUser(name, deptID, "warehouse")
+	autoEmployeeID := "AUTO-" + strconv.FormatInt(time.Now().UnixNano(), 10)
+	u, err := h.usersSvc.AddUser(autoEmployeeID, name, deptID, "warehouse")
 	if err != nil {
 		return "", err
 	}
