@@ -77,6 +77,19 @@
             <div class="ppe-field">
               <button type="button" class="ppe-section-bar">
                 <span class="ppe-section-bar-icon" aria-hidden="true"></span>
+                <span>{{call .T "department"}}</span>
+              </button>
+              <select name="department_id" class="ppe-select" required>
+                <option value="">{{call .T "select_department"}}</option>
+                {{range .Data.Departments}}
+                  <option value="{{.ID}}" {{if eq .ID $.Data.IssueForm.DepartmentID}}selected{{end}}>{{.Name}}</option>
+                {{end}}
+              </select>
+            </div>
+
+            <div class="ppe-field">
+              <button type="button" class="ppe-section-bar">
+                <span class="ppe-section-bar-icon" aria-hidden="true"></span>
                 <span>{{call .T "issued_by_warehouse"}}</span>
               </button>
               <input type="hidden" name="issued_by_user_id" value="{{.Data.CurrentWarehouseUserID}}" />

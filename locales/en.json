@@ -30,6 +30,7 @@
   "record_issue": "Record Issue",
   "record_return": "Record Return",
   "select_employee": "Select employee",
+  "select_department": "Select department",
   "select_item": "Select item",
   "select_warehouse_staff": "Select warehouse staff",
   "issue_transaction": "Issue Transaction",
@@ -123,7 +124,9 @@
   "employee_not_in_list_hint": "This person is not on the Employees list. An administrator must add them on the Employees page first (exact name as in the list).",
   "employee_name_roster_hint": "Use an employee name exactly as it appears on the Employees page.",
   "issued_to_required": "Issued to (employee) is required.",
-  "returned_by_required": "Returned by (employee) is required."
+  "returned_by_required": "Returned by (employee) is required.",
+  "department_required": "Department is required.",
+  "issued_to_department_mismatch": "Selected department does not match this employee."
   ,"upload_employees_excel": "Upload Employees Excel"
   ,"select_excel_file": "Select Excel File (.xlsx)"
   ,"upload": "Upload"
@@ -135,4 +138,13 @@
   ,"employees_upload_missing_columns": "Excel must contain required columns: employee_id, full_name (or name), department_id, role."
   ,"employees_upload_required_cells": "Required columns must be filled (employee_id, full_name/name, department_id, role)."
   ,"row": "Row"
+  ,"upload_items_excel": "Upload Items Excel"
+  ,"items_upload_success": "Items uploaded successfully"
+  ,"items_upload_file_required": "Please select an Excel file to upload."
+  ,"items_upload_read_failed": "Failed to read uploaded file."
+  ,"items_upload_invalid_excel": "Invalid Excel file. Please upload a .xlsx file."
+  ,"items_upload_empty_sheet": "Uploaded Excel is empty."
+  ,"items_upload_missing_columns": "Excel must contain required columns: name, size, quantity, issue_date, expiry_date."
+  ,"items_upload_required_cells": "Required columns must be filled (name, size, quantity, issue_date, expiry_date)."
+  ,"quantity_must_be_number": "Quantity must be a number."
 }

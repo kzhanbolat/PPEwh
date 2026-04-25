@@ -103,6 +103,7 @@ func Run() {
 	itemsHandler := handlers.NewItemsHandler(itemsSvc, txSvc, templates)
 	protected.GET("/items", itemsHandler.ListPage)
 	protected.POST("/items", itemsHandler.Add)
+	protected.POST("/items/upload", itemsHandler.UploadExcel)
 	protected.GET("/items/export", itemsHandler.Export)
 
 	// Users

@@ -30,6 +30,7 @@
   "record_issue": "Зафиксировать выдачу",
   "record_return": "Зафиксировать возврат",
   "select_employee": "Выберите сотрудника",
+  "select_department": "Выберите отдел",
   "select_item": "Выберите товар",
   "select_warehouse_staff": "Выберите сотрудника склада",
   "issue_transaction": "Операция выдачи",
@@ -123,7 +124,9 @@
   "employee_not_in_list_hint": "Этого человека нет в списке сотрудников. Администратор должен сначала добавить его на странице «Сотрудники» (точное имя, как в списке).",
   "employee_name_roster_hint": "Укажите имя сотрудника точно так же, как на странице «Сотрудники».",
   "issued_to_required": "Укажите, кому выдано (сотрудник).",
-  "returned_by_required": "Укажите, кто возвращает (сотрудник)."
+  "returned_by_required": "Укажите, кто возвращает (сотрудник).",
+  "department_required": "Укажите отдел.",
+  "issued_to_department_mismatch": "Выбранный отдел не соответствует указанному сотруднику."
   ,"upload_employees_excel": "Загрузка сотрудников из Excel"
   ,"select_excel_file": "Выберите Excel файл (.xlsx)"
   ,"upload": "Загрузить"
@@ -135,4 +138,13 @@
   ,"employees_upload_missing_columns": "Excel должен содержать обязательные колонки: employee_id, full_name (или name), department_id, role."
   ,"employees_upload_required_cells": "Обязательные колонки должны быть заполнены (employee_id, full_name/name, department_id, role)."
   ,"row": "Строка"
+  ,"upload_items_excel": "Загрузка товаров из Excel"
+  ,"items_upload_success": "Товары успешно загружены"
+  ,"items_upload_file_required": "Выберите Excel файл для загрузки."
+  ,"items_upload_read_failed": "Не удалось прочитать загруженный файл."
+  ,"items_upload_invalid_excel": "Некорректный Excel файл. Загрузите файл .xlsx."
+  ,"items_upload_empty_sheet": "Загруженный Excel файл пуст."
+  ,"items_upload_missing_columns": "Excel должен содержать обязательные колонки: name, size, quantity, issue_date, expiry_date."
+  ,"items_upload_required_cells": "Обязательные колонки должны быть заполнены (name, size, quantity, issue_date, expiry_date)."
+  ,"quantity_must_be_number": "Количество должно быть числом."
 }

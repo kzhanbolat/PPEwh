@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/xuri/excelize/v2"
@@ -100,5 +102,111 @@ func (h *ItemsHandler) Export(c *gin.Context) {
 
 	c.Header("Content-Disposition", `attachment; filename="items_export.xlsx"`)
 	c.Data(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buf.Bytes())
+}
+
+func (h *ItemsHandler) UploadExcel(c *gin.Context) {
+	lang := getLang(c)
+	t := translator(lang)
+
+	fileHeader, err := c.FormFile("items_file")
+	if err != nil {
+		h.renderItemsPage(c, http.StatusBadRequest, lang, t, "", t("items_upload_file_required"))
+		return
+	}
+	src, err := fileHeader.Open()
+	if err != nil {
+		h.renderItemsPage(c, http.StatusBadRequest, lang, t, "", t("items_upload_read_failed"))
+		return
+	}
+	defer src.Close()
+
+	wb, err := excelize.OpenReader(src)
+	if err != nil {
+		h.renderItemsPage(c, http.StatusBadRequest, lang, t, "", t("items_upload_invalid_excel"))
+		return
+	}
+	defer func() { _ = wb.Close() }()
+
+	sheets := wb.GetSheetList()
+	if len(sheets) == 0 {
+		h.renderItemsPage(c, http.StatusBadRequest, lang, t, "", t("items_upload_empty_sheet"))
+		return
+	}
+	rows, err := wb.GetRows(sheets[0])
+	if err != nil || len(rows) == 0 {
+		h.renderItemsPage(c, http.StatusBadRequest, lang, t, "", t("items_upload_empty_sheet"))
+		return
+	}
+
+	headerIndex := map[string]int{}
+	for idx, hname := range rows[0] {
+		key := strings.ToLower(strings.TrimSpace(hname))
+		headerIndex[key] = idx
+	}
+
+	nameIdx, okName := headerIndex["name"]
+	sizeIdx, okSize := headerIndex["size"]
+	qtyIdx, okQty := headerIndex["quantity"]
+	issueIdx, okIssue := headerIndex["issue_date"]
+	expiryIdx, okExpiry := headerIndex["expiry_date"]
+	if !okName || !okSize || !okQty || !okIssue || !okExpiry {
+		h.renderItemsPage(c, http.StatusBadRequest, lang, t, "", t("items_upload_missing_columns"))
+		return
+	}
+
+	var errorsList []string
+	added := 0
+	for i := 1; i < len(rows); i++ {
+		row := rows[i]
+		name := valueAt(row, nameIdx)
+		size := valueAt(row, sizeIdx)
+		qtyStr := valueAt(row, qtyIdx)
+		issueDate := valueAt(row, issueIdx)
+		expiryDate := valueAt(row, expiryIdx)
+
+		if name == "" && size == "" && qtyStr == "" && issueDate == "" && expiryDate == "" {
+			continue
+		}
+		if name == "" || size == "" || qtyStr == "" || issueDate == "" || expiryDate == "" {
+			errorsList = append(errorsList, fmt.Sprintf("%s %d: %s", t("row"), i+1, t("items_upload_required_cells")))
+			continue
+		}
+		qty, err := strconv.Atoi(qtyStr)
+		if err != nil {
+			errorsList = append(errorsList, fmt.Sprintf("%s %d: %s", t("row"), i+1, t("quantity_must_be_number")))
+			continue
+		}
+		if _, err := h.itemsSvc.AddItem(name, size, qty, issueDate, expiryDate); err != nil {
+			errorsList = append(errorsList, fmt.Sprintf("%s %d: %s", t("row"), i+1, err.Error()))
+			continue
+		}
+		added++
+	}
+
+	if len(errorsList) > 0 {
+		h.renderItemsPage(c, http.StatusBadRequest, lang, t, "", strings.Join(errorsList, "; "))
+		return
+	}
+	success := fmt.Sprintf("%s: %d", t("items_upload_success"), added)
+	h.renderItemsPage(c, http.StatusOK, lang, t, success, "")
+}
+
+func (h *ItemsHandler) renderItemsPage(c *gin.Context, status int, lang string, t func(string) string, success string, errMsg string) {
+	items, err := h.itemsSvc.List()
+	if err != nil {
+		c.HTML(http.StatusInternalServerError, "items.html", ItemsTableData{
+			Lang:  lang,
+			T:     t,
+			Error: "failed to load items",
+		})
+		return
+	}
+	c.HTML(status, "items.html", ItemsTableData{
+		Lang:    lang,
+		T:       t,
+		Items:   items,
+		Success: success,
+		Error:   errMsg,
+	})
 }
 

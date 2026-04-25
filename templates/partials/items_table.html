@@ -9,6 +9,28 @@
   <div class="ppe-panel">
     <button type="button" class="ppe-section-bar">
       <span class="ppe-section-bar-icon" aria-hidden="true"></span>
+      <span>{{call .T "upload_items_excel"}}</span>
+    </button>
+    <form
+      class="space-y-3 mt-2"
+      action="/items/upload?lang={{.Lang}}"
+      enctype="multipart/form-data"
+      method="post"
+    >
+      <input type="hidden" name="lang" value="{{.Lang}}" />
+      <div class="ppe-field">
+        <label for="items-file">{{call .T "select_excel_file"}}</label>
+        <input id="items-file" type="file" name="items_file" class="ppe-input" accept=".xlsx" required />
+      </div>
+      <div class="ppe-form-actions">
+        <button class="ppe-btn-filter" type="submit">{{call .T "upload"}}</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="ppe-panel">
+    <button type="button" class="ppe-section-bar">
+      <span class="ppe-section-bar-icon" aria-hidden="true"></span>
       <span>{{call .T "add_item"}}</span>
     </button>
     <form

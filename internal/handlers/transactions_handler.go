@@ -160,6 +160,7 @@ func (h *TransactionsHandler) ReturnPage(c *gin.Context) {
 func (h *TransactionsHandler) Issue(c *gin.Context) {
 	issueForm := IssueFormData{
 		IssuedToUserName: c.PostForm("issued_to_user_name"),
+		DepartmentID:   c.PostForm("department_id"),
 		IssuedByUserID: c.PostForm("issued_by_user_id"),
 		ItemID:         c.PostForm("item_id"),
 		Quantity:       c.PostForm("quantity"),
@@ -180,9 +181,17 @@ func (h *TransactionsHandler) Issue(c *gin.Context) {
 		h.renderIssuePage(c, http.StatusBadRequest, issueForm, t("issued_to_required"), "")
 		return
 	}
-	issuedToUserID, ok := h.tryResolveUserIDByName(issueForm.IssuedToUserName)
+	if strings.TrimSpace(issueForm.DepartmentID) == "" {
+		h.renderIssuePage(c, http.StatusBadRequest, issueForm, t("department_required"), "")
+		return
+	}
+	issuedToUserID, issuedToUser, ok := h.tryResolveUserByName(issueForm.IssuedToUserName)
 	if !ok {
 		h.renderIssuePage(c, http.StatusBadRequest, issueForm, t("employee_not_in_list_hint"), "")
+		return
+	}
+	if issuedToUser.DepartmentID != issueForm.DepartmentID {
+		h.renderIssuePage(c, http.StatusBadRequest, issueForm, t("issued_to_department_mismatch"), "")
 		return
 	}
 	warehouseUserID, _, actorErr := h.currentWarehouseActor(c)
@@ -445,6 +454,10 @@ func (h *TransactionsHandler) buildDashboardPageData(lang string, issueForm Issu
 	if err != nil {
 		return DashboardPageData{}, err
 	}
+	depts, err := h.deptsSvc.List()
+	if err != nil {
+		return DashboardPageData{}, err
+	}
 
 	_, rows, err := h.listTransactionRows()
 	if err != nil {
@@ -457,6 +470,7 @@ func (h *TransactionsHandler) buildDashboardPageData(lang string, issueForm Issu
 	pageData := DashboardPageData{
 		Items:               items,
 		IssuedToUsers:      filterUsers(users, false),
+		Departments:       depts,
 		WarehouseStaff:     filterUsers(users, true),
 		CurrentWarehouseUserID:   warehouseUserID,
 		CurrentWarehouseUserName: warehouseUserName,
@@ -495,21 +509,26 @@ func localizeIssueError(lang string, raw string) string {
 	return raw
 }
 
-func (h *TransactionsHandler) tryResolveUserIDByName(name string) (string, bool) {
+func (h *TransactionsHandler) tryResolveUserByName(name string) (string, models.User, bool) {
 	name = strings.TrimSpace(name)
 	if name == "" {
-		return "", false
+		return "", models.User{}, false
 	}
 	users, err := h.usersSvc.List()
 	if err != nil {
-		return "", false
+		return "", models.User{}, false
 	}
 	for _, u := range users {
 		if strings.EqualFold(strings.TrimSpace(u.Name), name) {
-			return u.ID, true
+			return u.ID, u, true
 		}
 	}
-	return "", false
+	return "", models.User{}, false
+}
+
+func (h *TransactionsHandler) tryResolveUserIDByName(name string) (string, bool) {
+	id, _, ok := h.tryResolveUserByName(name)
+	return id, ok
 }
 
 func (h *TransactionsHandler) defaultDepartmentID() (string, error) {
