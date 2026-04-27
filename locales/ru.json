@@ -30,7 +30,6 @@
   "record_issue": "Зафиксировать выдачу",
   "record_return": "Зафиксировать возврат",
   "select_employee": "Выберите сотрудника",
-  "select_department": "Выберите отдел",
   "select_item": "Выберите товар",
   "select_warehouse_staff": "Выберите сотрудника склада",
   "issue_transaction": "Операция выдачи",
@@ -124,9 +123,7 @@
   "employee_not_in_list_hint": "Этого человека нет в списке сотрудников. Администратор должен сначала добавить его на странице «Сотрудники» (точное имя, как в списке).",
   "employee_name_roster_hint": "Укажите имя сотрудника точно так же, как на странице «Сотрудники».",
   "issued_to_required": "Укажите, кому выдано (сотрудник).",
-  "returned_by_required": "Укажите, кто возвращает (сотрудник).",
-  "department_required": "Укажите отдел.",
-  "issued_to_department_mismatch": "Выбранный отдел не соответствует указанному сотруднику."
+  "returned_by_required": "Укажите, кто возвращает (сотрудник)."
   ,"upload_employees_excel": "Загрузка сотрудников из Excel"
   ,"select_excel_file": "Выберите Excel файл (.xlsx)"
   ,"upload": "Загрузить"

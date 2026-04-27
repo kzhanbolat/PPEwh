@@ -47,7 +47,6 @@ type ReturnIssueOption struct {
 type IssueFormData struct {
 	IssuedToUserID string
 	IssuedToUserName string
-	DepartmentID   string
 	IssuedByUserID string
 	ItemID         string
 	Quantity       string

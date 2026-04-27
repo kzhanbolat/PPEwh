@@ -15,7 +15,6 @@ import (
 type DashboardPageData struct {
 	Items []models.Item
 	IssuedToUsers []models.User
-	Departments []models.Department
 	WarehouseStaff []models.User
 	CurrentWarehouseUserID string
 	CurrentWarehouseUserName string

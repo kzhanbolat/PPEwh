@@ -55,36 +55,13 @@
                 <span class="ppe-section-bar-icon" aria-hidden="true"></span>
                 <span>{{call .T "issued_to_employee"}}</span>
               </button>
-              <input
-                id="issued-to-name"
-                name="issued_to_user_name"
-                type="text"
-                class="ppe-input"
-                list="employee-name-options"
-                autocomplete="off"
-                placeholder="{{call .T "user_name"}}"
-                value="{{.Data.IssueForm.IssuedToUserName}}"
-                required
-              />
-              <datalist id="employee-name-options">
+              <select id="issued-to-name" name="issued_to_user_name" class="ppe-select" required>
+                <option value="">{{call .T "select_employee"}}</option>
                 {{range .Data.IssuedToUsers}}
-                  <option value="{{.Name}}"></option>
-                {{end}}
-              </datalist>
-              <p class="ppe-muted-note">{{call .T "employee_name_roster_hint"}}</p>
-            </div>
-
-            <div class="ppe-field">
-              <button type="button" class="ppe-section-bar">
-                <span class="ppe-section-bar-icon" aria-hidden="true"></span>
-                <span>{{call .T "department"}}</span>
-              </button>
-              <select name="department_id" class="ppe-select" required>
-                <option value="">{{call .T "select_department"}}</option>
-                {{range .Data.Departments}}
-                  <option value="{{.ID}}" {{if eq .ID $.Data.IssueForm.DepartmentID}}selected{{end}}>{{.Name}}</option>
+                  <option value="{{.Name}}" {{if eq .Name $.Data.IssueForm.IssuedToUserName}}selected{{end}}>{{.Name}}</option>
                 {{end}}
               </select>
+              <p class="ppe-muted-note">{{call .T "employee_name_roster_hint"}}</p>
             </div>
 
             <div class="ppe-field">

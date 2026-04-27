@@ -30,7 +30,6 @@
   "record_issue": "Record Issue",
   "record_return": "Record Return",
   "select_employee": "Select employee",
-  "select_department": "Select department",
   "select_item": "Select item",
   "select_warehouse_staff": "Select warehouse staff",
   "issue_transaction": "Issue Transaction",
@@ -124,9 +123,7 @@
   "employee_not_in_list_hint": "This person is not on the Employees list. An administrator must add them on the Employees page first (exact name as in the list).",
   "employee_name_roster_hint": "Use an employee name exactly as it appears on the Employees page.",
   "issued_to_required": "Issued to (employee) is required.",
-  "returned_by_required": "Returned by (employee) is required.",
-  "department_required": "Department is required.",
-  "issued_to_department_mismatch": "Selected department does not match this employee."
+  "returned_by_required": "Returned by (employee) is required."
   ,"upload_employees_excel": "Upload Employees Excel"
   ,"select_excel_file": "Select Excel File (.xlsx)"
   ,"upload": "Upload"
