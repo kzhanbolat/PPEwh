@@ -154,27 +154,6 @@ func (h *DashboardHandler) Dashboard(c *gin.Context) {
 		}
 	}
 
-	totalStock := 0
-	lowStockItems := make([]models.Item, 0)
-	expiringItems := make([]models.Item, 0)
-	today := time.Now().Truncate(24 * time.Hour)
-	expiryLimit := today.AddDate(0, 0, expiringWithinDays)
-
-	for _, item := range items {
-		totalStock += item.Quantity
-		if item.Quantity < lowStockThreshold {
-			lowStockItems = append(lowStockItems, item)
-		}
-		if item.ExpiryDate != "" {
-			expiryDate, parseErr := time.Parse("2006-01-02", strings.TrimSpace(item.ExpiryDate))
-			if parseErr == nil {
-				if (expiryDate.Equal(today) || expiryDate.After(today)) && (expiryDate.Equal(expiryLimit) || expiryDate.Before(expiryLimit)) {
-					expiringItems = append(expiringItems, item)
-				}
-			}
-		}
-	}
-
 	userMap := map[string]models.User{}
 	for _, u := range users {
 		userMap[u.ID] = u
@@ -253,7 +232,11 @@ func (h *DashboardHandler) Dashboard(c *gin.Context) {
 	lineReturned := map[string]int{}
 	barItemQty := map[string]int{}
 	deptItemIssued := map[string]map[string]int{}
+	filteredItemIDs := map[string]bool{}
 	for _, ev := range events {
+		if ev.ItemID != "" {
+			filteredItemIDs[ev.ItemID] = true
+		}
 		if ev.EventType == "ISSUE" {
 			lineIssued[ev.DateKey] += 1
 			u := userMap[ev.UserID]
@@ -273,6 +256,56 @@ func (h *DashboardHandler) Dashboard(c *gin.Context) {
 		}
 		// Inventory activity quantity for the selected item or all items.
 		barItemQty[ev.DateKey] += ev.Quantity
+	}
+
+	// Apply the same dashboard filter scope to stock/low/expiring blocks.
+	// - No filters: use all items.
+	// - item filter: only selected item.
+	// - date/employee/department filters: items present in filtered events.
+	hasTxScopeFilter := fromDate != "" || toDate != "" || selectedEmployeeID != "" || selectedDepartmentID != ""
+	scopedItems := make([]models.Item, 0, len(items))
+	for _, item := range items {
+		if selectedItemID != "" && item.ID != selectedItemID {
+			continue
+		}
+		if hasTxScopeFilter && selectedItemID == "" && !filteredItemIDs[item.ID] {
+			continue
+		}
+		scopedItems = append(scopedItems, item)
+	}
+
+	totalStock := 0
+	lowStockItems := make([]models.Item, 0)
+	expiringItems := make([]models.Item, 0)
+	seenLowStock := map[string]bool{}
+	seenExpiring := map[string]bool{}
+	today := time.Now().Truncate(24 * time.Hour)
+	expiryLimit := today.AddDate(0, 0, expiringWithinDays)
+	for _, item := range scopedItems {
+		totalStock += item.Quantity
+		lowKey := strings.ToLower(strings.TrimSpace(item.Name))
+		if lowKey == "" {
+			lowKey = item.ID
+		}
+		if item.Quantity < lowStockThreshold && !seenLowStock[lowKey] {
+			lowStockItems = append(lowStockItems, item)
+			seenLowStock[lowKey] = true
+		}
+		if item.ExpiryDate == "" {
+			continue
+		}
+		expiryDate, parseErr := time.Parse("2006-01-02", strings.TrimSpace(item.ExpiryDate))
+		if parseErr != nil {
+			continue
+		}
+		expKey := strings.ToLower(strings.TrimSpace(item.Name))
+		if expKey == "" {
+			expKey = item.ID
+		}
+		if (expiryDate.Equal(today) || expiryDate.After(today)) && (expiryDate.Equal(expiryLimit) || expiryDate.Before(expiryLimit)) && !seenExpiring[expKey] {
+			expiringItems = append(expiringItems, item)
+			seenExpiring[expKey] = true
+		}
 	}
 
 	lineLabels := make([]string, 0, len(lineIssued)+len(lineReturned))
