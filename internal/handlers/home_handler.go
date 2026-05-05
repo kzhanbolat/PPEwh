@@ -25,6 +25,10 @@ type DashboardPageData struct {
 	TransactionsTableData
 }
 
+type MainPageData struct {
+	IsAdmin bool
+}
+
 type HomeHandler struct {
 	itemsSvc *services.ItemsService
 	usersSvc *services.UsersService
@@ -39,12 +43,18 @@ func NewHomeHandler(itemsSvc *services.ItemsService, usersSvc *services.UsersSer
 func (h *HomeHandler) Dashboard(c *gin.Context) {
 	lang := getLang(c)
 	t := translator(lang)
+	isAdmin := false
+	if v, ok := c.Get("auth_is_admin"); ok {
+		if b, ok := v.(bool); ok {
+			isAdmin = b
+		}
+	}
 	c.HTML(http.StatusOK, "main.html", PageData{
 		Lang:    lang,
 		T:       t,
 		Success: "",
 		Error:   "",
-		Data:    nil,
+		Data:    MainPageData{IsAdmin: isAdmin},
 	})
 }
 

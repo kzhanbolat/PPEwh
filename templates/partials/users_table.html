@@ -12,7 +12,6 @@
       <table class="ppe-table">
         <thead>
           <tr>
-            <th>{{call .T "id"}}</th>
             <th>{{call .T "employee_id"}}</th>
             <th>{{call .T "full_name"}}</th>
             <th>{{call .T "department_id"}}</th>
@@ -22,12 +21,11 @@
         <tbody>
           {{range .Users}}
             <tr>
-              <td class="ppe-mono"><span class="ppe-ellipsis-inline" title="{{.ID}}">{{.ID}}</span></td>
               <td class="ppe-mono"><span class="ppe-ellipsis-inline" title="{{.EmployeeID}}">{{.EmployeeID}}</span></td>
               <td><span class="ppe-ellipsis-inline" title="{{.Name}}">{{.Name}}</span></td>
               <td><span class="ppe-ellipsis-inline" title="{{.DepartmentID}}">{{.DepartmentID}}</span></td>
               <td>
-                <span class='{{if eq .Role "warehouse"}}text-emerald-700{{else}}text-slate-700{{end}} font-semibold'>{{if eq .Role "warehouse"}}{{call $.T "role_warehouse"}}{{else}}{{call $.T "role_employee"}}{{end}}</span>
+                <span class="text-slate-700 font-semibold ppe-ellipsis-inline" title="{{.Role}}">{{.Role}}</span>
               </td>
             </tr>
           {{end}}

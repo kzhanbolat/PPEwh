@@ -14,12 +14,13 @@
         <header class="ppe-home-header">
           <div class="ppe-brand-mark" aria-hidden="true">PS</div>
           <h1 class="ppe-home-title">{{call .T "dashboard_title"}}</h1>
-          <p class="ppe-home-sub">{{call .T "dashboard_subtitle"}}</p>
         </header>
 
         <div class="ppe-lang-row ppe-lang-row--tight">
-          <a href="/admin/access?lang={{.Lang}}">{{call .T "admin_access"}}</a>
-          <span class="text-slate-300">|</span>
+          {{if .Data.IsAdmin}}
+            <a href="/admin/access?lang={{.Lang}}">{{call .T "admin_access"}}</a>
+            <span class="text-slate-300">|</span>
+          {{end}}
           <a href="/dashboard?lang={{.Lang}}">{{call .T "dashboard"}}</a>
           <span class="text-slate-300">|</span>
           <a href="/?lang=en">EN</a>
