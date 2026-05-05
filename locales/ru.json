@@ -47,7 +47,7 @@
   "warehouse_users": "Сотрудники склада",
   "add_user": "Добавить сотрудника",
   "add_employee": "Добавить сотрудника",
-  "department_id": "ID отдела",
+  "department_id": "Название отдела",
   "role": "Роль",
   "role_employee": "Сотрудник",
   "role_warehouse": "Склад",

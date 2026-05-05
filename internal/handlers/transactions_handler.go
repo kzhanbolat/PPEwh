@@ -379,7 +379,13 @@ func (h *TransactionsHandler) listTransactionRows() ([]models.Transaction, []Tra
 	for _, tx := range txs {
 		toUser := userMap[tx.IssuedToUserID]
 		byUser := userMap[tx.IssuedByUserID]
-		dept := deptMap[tx.DepartmentID]
+		deptName := toUser.DepartmentID
+		if d, ok := deptMap[toUser.DepartmentID]; ok && d.Name != "" {
+			deptName = d.Name
+		}
+		if deptName == "" {
+			deptName = tx.DepartmentID
+		}
 		toName := toUser.Name
 		if toName == "" {
 			toName = tx.IssuedToUserID
@@ -396,14 +402,20 @@ func (h *TransactionsHandler) listTransactionRows() ([]models.Transaction, []Tra
 			IssuedToUserID:   tx.IssuedToUserID,
 			IssuedToUserName: toName,
 			IssuedByUserName: byName,
-			DepartmentName:   dept.Name,
+			DepartmentName:   deptName,
 		})
 	}
 
 	for _, ret := range rets {
 		toUser := userMap[ret.ReturnedByUserID]
 		byUser := userMap[ret.ReceivedByUserID]
-		dept := deptMap[ret.DepartmentID]
+		deptName := toUser.DepartmentID
+		if d, ok := deptMap[toUser.DepartmentID]; ok && d.Name != "" {
+			deptName = d.Name
+		}
+		if deptName == "" {
+			deptName = ret.DepartmentID
+		}
 
 		issueTx := issueByID[ret.TransactionID]
 		itemName := issueTx.ItemName
@@ -424,7 +436,7 @@ func (h *TransactionsHandler) listTransactionRows() ([]models.Transaction, []Tra
 			IssuedToUserID:   ret.ReturnedByUserID,
 			IssuedToUserName: toName,
 			IssuedByUserName: byName,
-			DepartmentName:   dept.Name,
+			DepartmentName:   deptName,
 		})
 	}
 

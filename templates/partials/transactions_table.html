@@ -17,7 +17,11 @@
         {{range .Transactions}}
           <tr>
             <td class="ppe-mono"><span class="ppe-ellipsis-inline" title="{{.Timestamp}}">{{.Timestamp}}</span></td>
-            <td><span class="ppe-ellipsis-inline" title="{{.EventType}}">{{.EventType}}</span></td>
+            <td>
+              <span class="ppe-ellipsis-inline" title="{{if eq .EventType "issue"}}{{call $.T "issue"}}{{else if eq .EventType "return"}}{{call $.T "return"}}{{else}}{{.EventType}}{{end}}">
+                {{if eq .EventType "issue"}}{{call $.T "issue"}}{{else if eq .EventType "return"}}{{call $.T "return"}}{{else}}{{.EventType}}{{end}}
+              </span>
+            </td>
             <td><span class="ppe-ellipsis-inline" title="{{.IssuedToUserName}}">{{.IssuedToUserName}}</span></td>
             <td><span class="ppe-ellipsis-inline" title="{{.IssuedByUserName}}">{{.IssuedByUserName}}</span></td>
             <td><span class="ppe-ellipsis-inline" title="{{.DepartmentName}}">{{.DepartmentName}}</span></td>

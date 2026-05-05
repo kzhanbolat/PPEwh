@@ -47,7 +47,7 @@
   "warehouse_users": "Warehouse Employees",
   "add_user": "Add Employee",
   "add_employee": "Add Employee",
-  "department_id": "Department ID",
+  "department_id": "Department Name",
   "role": "Role",
   "role_employee": "Employee",
   "role_warehouse": "Warehouse",

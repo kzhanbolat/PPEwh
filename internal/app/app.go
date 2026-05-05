@@ -107,7 +107,7 @@ func Run() {
 	protected.GET("/items/export", itemsHandler.Export)
 
 	// Users
-	usersHandler := handlers.NewUsersHandler(usersSvc, templates)
+	usersHandler := handlers.NewUsersHandler(usersSvc, deptsSvc)
 	protected.GET("/employees", usersHandler.ListPage)
 	protected.GET("/employees/export", usersHandler.Export)
 	protected.GET("/users", usersHandler.ListPage)

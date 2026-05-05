@@ -15,7 +15,6 @@
             <th>{{call .T "employee_id"}}</th>
             <th>{{call .T "full_name"}}</th>
             <th>{{call .T "department_id"}}</th>
-            <th>{{call .T "role"}}</th>
           </tr>
         </thead>
         <tbody>
@@ -23,15 +22,13 @@
             <tr>
               <td class="ppe-mono"><span class="ppe-ellipsis-inline" title="{{.EmployeeID}}">{{.EmployeeID}}</span></td>
               <td><span class="ppe-ellipsis-inline" title="{{.Name}}">{{.Name}}</span></td>
-              <td><span class="ppe-ellipsis-inline" title="{{.DepartmentID}}">{{.DepartmentID}}</span></td>
-              <td>
-                <span class="text-slate-700 font-semibold ppe-ellipsis-inline" title="{{.Role}}">{{.Role}}</span>
-              </td>
+              {{$deptName := index $.DepartmentNameByID .DepartmentID}}
+              <td><span class="ppe-ellipsis-inline" title="{{if $deptName}}{{$deptName}}{{else}}{{.DepartmentID}}{{end}}">{{if $deptName}}{{$deptName}}{{else}}{{.DepartmentID}}{{end}}</span></td>
             </tr>
           {{end}}
           {{if not .Users}}
             <tr>
-              <td colspan="5" class="ppe-empty">{{call .T "no_users"}}</td>
+              <td colspan="3" class="ppe-empty">{{call .T "no_users"}}</td>
             </tr>
           {{end}}
         </tbody>
@@ -75,6 +72,7 @@
         method="post"
       >
         <input type="hidden" name="lang" value="{{.Lang}}" />
+        <input type="hidden" name="role" value="employee" />
         <div class="ppe-field">
           <label for="add-user-employee-id">{{call .T "employee_id"}}</label>
           <input id="add-user-employee-id" name="employee_id" class="ppe-input" required />
@@ -85,13 +83,11 @@
         </div>
         <div class="ppe-field">
           <label for="add-user-dept">{{call .T "department_id"}}</label>
-          <input id="add-user-dept" name="department_id" class="ppe-input" required />
-        </div>
-        <div class="ppe-field">
-          <label for="add-user-role">{{call .T "role"}}</label>
-          <select id="add-user-role" name="role" class="ppe-select" required>
-            <option value="employee">{{call .T "role_employee"}}</option>
-            <option value="warehouse">{{call .T "role_warehouse"}}</option>
+          <select id="add-user-dept" name="department_id" class="ppe-select" required>
+            <option value=""></option>
+            {{range .DepartmentOptions}}
+              <option value="{{.ID}}">{{.Name}}</option>
+            {{end}}
           </select>
         </div>
         <div class="ppe-form-actions">

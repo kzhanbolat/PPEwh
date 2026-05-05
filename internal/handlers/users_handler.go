@@ -3,21 +3,24 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/xuri/excelize/v2"
 
+	"ppewh/internal/models"
 	"ppewh/internal/services"
 )
 
 type UsersHandler struct {
 	usersSvc *services.UsersService
+	deptsSvc *services.DepartmentsService
 }
 
-func NewUsersHandler(usersSvc *services.UsersService, _ any) *UsersHandler {
-	return &UsersHandler{usersSvc: usersSvc}
+func NewUsersHandler(usersSvc *services.UsersService, deptsSvc *services.DepartmentsService) *UsersHandler {
+	return &UsersHandler{usersSvc: usersSvc, deptsSvc: deptsSvc}
 }
 
 func (h *UsersHandler) ListPage(c *gin.Context) {
@@ -34,7 +37,14 @@ func (h *UsersHandler) ListPage(c *gin.Context) {
 		c.HTML(http.StatusInternalServerError, "employees.html", UsersTableData{Lang: lang, T: t, IsAdmin: isAdmin, Error: "failed to load users"})
 		return
 	}
-	c.HTML(http.StatusOK, "employees.html", UsersTableData{Lang: lang, T: t, IsAdmin: isAdmin, Users: users})
+	c.HTML(http.StatusOK, "employees.html", UsersTableData{
+		Lang:              lang,
+		T:                 t,
+		IsAdmin:           isAdmin,
+		Users:             users,
+		DepartmentOptions: h.departmentOptions(users),
+		DepartmentNameByID: h.departmentNameByID(),
+	})
 }
 
 func (h *UsersHandler) Add(c *gin.Context) {
@@ -53,11 +63,27 @@ func (h *UsersHandler) Add(c *gin.Context) {
 	}
 
 	if err != nil {
-		c.HTML(http.StatusBadRequest, "users_table.html", UsersTableData{Lang: lang, T: t, IsAdmin: true, Users: users, Error: err.Error()})
+		c.HTML(http.StatusBadRequest, "users_table.html", UsersTableData{
+			Lang:              lang,
+			T:                 t,
+			IsAdmin:           true,
+			Users:             users,
+			DepartmentOptions: h.departmentOptions(users),
+			DepartmentNameByID: h.departmentNameByID(),
+			Error:             err.Error(),
+		})
 		return
 	}
 
-	c.HTML(http.StatusOK, "users_table.html", UsersTableData{Lang: lang, T: t, IsAdmin: true, Users: users, Success: t("user_added_success")})
+	c.HTML(http.StatusOK, "users_table.html", UsersTableData{
+		Lang:              lang,
+		T:                 t,
+		IsAdmin:           true,
+		Users:             users,
+		DepartmentOptions: h.departmentOptions(users),
+		DepartmentNameByID: h.departmentNameByID(),
+		Success:           t("user_added_success"),
+	})
 }
 
 func (h *UsersHandler) Export(c *gin.Context) {
@@ -190,12 +216,14 @@ func (h *UsersHandler) renderUsersTable(c *gin.Context, status int, lang string,
 		return
 	}
 	c.HTML(status, "users_table.html", UsersTableData{
-		Lang:    lang,
-		T:       t,
-		IsAdmin: isAdmin,
-		Users:   users,
-		Success: success,
-		Error:   errMsg,
+		Lang:              lang,
+		T:                 t,
+		IsAdmin:           isAdmin,
+		Users:             users,
+		DepartmentOptions: h.departmentOptions(users),
+		DepartmentNameByID: h.departmentNameByID(),
+		Success:           success,
+		Error:             errMsg,
 	})
 }
 
@@ -218,12 +246,60 @@ func (h *UsersHandler) renderEmployeesPage(c *gin.Context, status int, lang stri
 		return
 	}
 	c.HTML(status, "employees.html", UsersTableData{
-		Lang:    lang,
-		T:       t,
-		IsAdmin: isAdmin,
-		Users:   users,
-		Success: success,
-		Error:   errMsg,
+		Lang:              lang,
+		T:                 t,
+		IsAdmin:           isAdmin,
+		Users:             users,
+		DepartmentOptions: h.departmentOptions(users),
+		DepartmentNameByID: h.departmentNameByID(),
+		Success:           success,
+		Error:             errMsg,
 	})
+}
+
+func (h *UsersHandler) departmentNameByID() map[string]string {
+	out := map[string]string{}
+	if h.deptsSvc == nil {
+		return out
+	}
+	depts, err := h.deptsSvc.List()
+	if err != nil {
+		return out
+	}
+	for _, d := range depts {
+		id := strings.TrimSpace(d.ID)
+		name := strings.TrimSpace(d.Name)
+		if id == "" || name == "" {
+			continue
+		}
+		out[id] = name
+	}
+	return out
+}
+
+func (h *UsersHandler) departmentOptions(users []models.User) []models.Department {
+	if h.deptsSvc != nil {
+		depts, err := h.deptsSvc.List()
+		if err == nil && len(depts) > 0 {
+			sort.Slice(depts, func(i, j int) bool {
+				return strings.TrimSpace(depts[i].Name) < strings.TrimSpace(depts[j].Name)
+			})
+			return depts
+		}
+	}
+
+	// Fallback: if departments storage is unavailable, derive from users.
+	seen := make(map[string]bool, len(users))
+	out := make([]models.Department, 0, len(users))
+	for _, u := range users {
+		deptID := strings.TrimSpace(u.DepartmentID)
+		if deptID == "" || seen[deptID] {
+			continue
+		}
+		seen[deptID] = true
+		out = append(out, models.Department{ID: deptID, Name: deptID})
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
+	return out
 }
 

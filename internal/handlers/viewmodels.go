@@ -14,6 +14,8 @@ type UsersTableData struct {
 	Lang    string
 	T       func(string) string
 	Users    []models.User
+	DepartmentOptions []models.Department
+	DepartmentNameByID map[string]string
 	IsAdmin bool
 	Success  string
 	Error    string
